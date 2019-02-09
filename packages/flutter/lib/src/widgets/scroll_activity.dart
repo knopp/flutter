@@ -16,6 +16,7 @@ import 'framework.dart';
 import 'gesture_detector.dart';
 import 'scroll_metrics.dart';
 import 'scroll_notification.dart';
+import 'scroll_position.dart';
 import 'ticker_provider.dart';
 
 /// A backend for a [ScrollActivity].
@@ -531,7 +532,16 @@ class BallisticScrollActivity extends ScrollActivity {
     delegate.goBallistic(velocity);
   }
 
+  ScrollPosition get _scrollPosition {
+    final Object position = delegate;
+    return position is ScrollPosition ? position : null;
+  }
+
   void _tick() {
+    // allow interaction when finishing scrolling
+    if (velocity.abs() < 100 && _scrollPosition != null) {
+      _scrollPosition.context.setIgnorePointer(false);      
+    }
     if (!applyMoveTo(_controller.value))
       delegate.goIdle();
   }
