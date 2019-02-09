@@ -17,6 +17,7 @@ import 'gesture_detector.dart';
 import 'scroll_metrics.dart';
 import 'scroll_notification.dart';
 import 'scroll_position.dart';
+import 'scroll_simulation.dart';
 import 'ticker_provider.dart';
 
 /// A backend for a [ScrollActivity].
@@ -507,7 +508,7 @@ class BallisticScrollActivity extends ScrollActivity {
     ScrollActivityDelegate delegate,
     Simulation simulation,
     TickerProvider vsync,
-  ) : super(delegate) {
+  ) : _simulation = simulation, super(delegate) {
     _controller = AnimationController.unbounded(
       debugLabel: '$runtimeType',
       vsync: vsync,
@@ -520,6 +521,8 @@ class BallisticScrollActivity extends ScrollActivity {
   @override
   double get velocity => _controller.velocity;
 
+  Simulation _simulation;
+
   AnimationController _controller;
 
   @override
@@ -529,7 +532,18 @@ class BallisticScrollActivity extends ScrollActivity {
 
   @override
   void applyNewDimensions() {
-    delegate.goBallistic(velocity);
+    final ScrollPosition position = _scrollPosition;
+    if (position != null && _simulation is ScrollSimulation) {
+      final ScrollSimulation simulation = _simulation;      
+      final double finalX = simulation.finalX();
+      if (finalX != null &&
+          (finalX < position.minScrollExtent || finalX > position.maxScrollExtent)) {
+        // only restart ballistic activity when extent change affects our simulation
+        delegate.goBallistic(velocity);
+      }      
+    } else {
+      delegate.goBallistic(velocity);
+    }
   }
 
   ScrollPosition get _scrollPosition {
