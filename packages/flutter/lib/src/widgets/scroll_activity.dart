@@ -17,6 +17,7 @@ import 'gesture_detector.dart';
 import 'scroll_metrics.dart';
 import 'scroll_notification.dart';
 import 'scroll_position.dart';
+import 'scroll_simulation.dart';
 import 'ticker_provider.dart';
 
 /// A backend for a [ScrollActivity].
@@ -518,7 +519,7 @@ class BallisticScrollActivity extends ScrollActivity {
     ScrollActivityDelegate delegate,
     Simulation simulation,
     TickerProvider vsync,
-  ) : super(delegate) {
+  ) : _simulation = simulation, super(delegate) {
     _controller = AnimationController.unbounded(
       debugLabel: kDebugMode ? objectRuntimeType(this, 'BallisticScrollActivity') : null,
       vsync: vsync,
@@ -526,7 +527,15 @@ class BallisticScrollActivity extends ScrollActivity {
       ..addListener(_tick)
       ..animateWith(simulation)
        .whenComplete(_end); // won't trigger if we dispose _controller first
+
+    final ScrollPosition position = _scrollPosition;
+    if (position != null) {
+      _lastMinScrollExtent = position.minScrollExtent;
+      _lastMaxScrollExtent = position.maxScrollExtent;
+    }
   }
+
+  final Simulation _simulation;
 
   AnimationController _controller;
 
@@ -535,9 +544,26 @@ class BallisticScrollActivity extends ScrollActivity {
     delegate.goBallistic(velocity);
   }
 
+  double _lastMinScrollExtent;
+  double _lastMaxScrollExtent;
+
   @override
   void applyNewDimensions() {
-    delegate.goBallistic(velocity);
+    final ScrollPosition position = _scrollPosition;
+    if (position != null && _simulation is ScrollSimulation) {
+      final ScrollSimulation simulation = _simulation as ScrollSimulation;
+      final double finalX = simulation.finalX();
+      if (finalX == null ||
+          ((_lastMinScrollExtent != position.minScrollExtent && finalX < position.minScrollExtent) ||
+              (_lastMaxScrollExtent != position.maxScrollExtent && finalX > position.maxScrollExtent))) {
+        // only restart ballistic activity when extent change affects our simulation
+        delegate.goBallistic(velocity);
+      }
+      _lastMinScrollExtent = position.minScrollExtent;
+      _lastMaxScrollExtent = position.maxScrollExtent;
+    } else {
+      delegate.goBallistic(velocity);
+    }
   }
 
   ScrollPosition get _scrollPosition {

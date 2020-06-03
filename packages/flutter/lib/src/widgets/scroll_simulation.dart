@@ -7,12 +7,21 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/physics.dart';
 
+/// Scroll simuation that can provide destination position 
+abstract class ScrollSimulation extends Simulation {
+  /// Initializes simulation
+  ScrollSimulation({Tolerance tolerance = Tolerance.defaultTolerance}) : super(tolerance: tolerance);
+
+  /// Provides destination position or null if can not be determined
+  double finalX();
+}
+
 /// An implementation of scroll physics that matches iOS.
 ///
 /// See also:
 ///
 ///  * [ClampingScrollSimulation], which implements Android scroll physics.
-class BouncingScrollSimulation extends Simulation {
+class BouncingScrollSimulation extends ScrollSimulation {
   /// Creates a simulation group for scrolling on iOS, with the given
   /// parameters.
   ///
@@ -92,6 +101,11 @@ class BouncingScrollSimulation extends Simulation {
   double _springTime;
   double _timeOffset = 0.0;
 
+  @override
+  double finalX() {
+    return _frictionSimulation?.finalX;
+  }
+
   Simulation _underscrollSimulation(double x, double dx) {
     return ScrollSpringSimulation(spring, x, leadingExtent, dx);
   }
@@ -138,7 +152,7 @@ class BouncingScrollSimulation extends Simulation {
 //
 // The "See..." comments below refer to Scroller methods and values. Some
 // simplifications have been made.
-class ClampingScrollSimulation extends Simulation {
+class ClampingScrollSimulation extends ScrollSimulation {
   /// Creates a scroll physics simulation that matches Android scrolling.
   ClampingScrollSimulation({
     @required this.position,
@@ -225,5 +239,10 @@ class ClampingScrollSimulation extends Simulation {
   @override
   bool isDone(double time) {
     return time >= _duration;
+  }
+
+  @override
+  double finalX() {
+    return dx(_duration);
   }
 }
