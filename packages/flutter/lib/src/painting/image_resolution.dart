@@ -252,7 +252,7 @@ class AssetImage extends AssetBundleImageProvider {
       return candidates[upper];
     if (upper == null)
       return candidates[lower];
-    if (value > (lower + upper) / 2)
+    if (value > lower) // always scale down if possible
       return candidates[upper];
     else
       return candidates[lower];
