@@ -13,6 +13,8 @@ import 'basic.dart';
 import 'framework.dart';
 import 'scroll_metrics.dart';
 import 'scroll_notification.dart';
+import 'scroll_position.dart';
+import 'scroll_simulation.dart';
 
 /// A backend for a [ScrollActivity].
 ///
@@ -528,7 +530,7 @@ class BallisticScrollActivity extends ScrollActivity {
     Simulation simulation,
     TickerProvider vsync,
     this.shouldIgnorePointer,
-  ) {
+  ) : _simulation = simulation {
     _controller = AnimationController.unbounded(
       debugLabel: kDebugMode ? objectRuntimeType(this, 'BallisticScrollActivity') : null,
       vsync: vsync,
@@ -536,7 +538,18 @@ class BallisticScrollActivity extends ScrollActivity {
       ..addListener(_tick)
       ..animateWith(simulation)
        .whenComplete(_end); // won't trigger if we dispose _controller first
+
+    final ScrollPosition? position = _scrollPosition;
+     if (position != null) {
+       _lastMinScrollExtent = position.minScrollExtent;
+       _lastMaxScrollExtent = position.maxScrollExtent;
+     }
   }
+
+  final Simulation _simulation;
+
+  late double _lastMinScrollExtent;
+  late double _lastMaxScrollExtent;
 
   late AnimationController _controller;
 
@@ -545,9 +558,27 @@ class BallisticScrollActivity extends ScrollActivity {
     delegate.goBallistic(velocity);
   }
 
+  ScrollPosition? get _scrollPosition {
+    final Object position = delegate;
+    return position is ScrollPosition ? position : null;
+  }
+
   @override
   void applyNewDimensions() {
-    delegate.goBallistic(velocity);
+    final ScrollPosition? position = _scrollPosition;
+     if (position != null && _simulation is ScrollSimulation) {
+       final ScrollSimulation simulation = _simulation as ScrollSimulation;
+       final double finalX = simulation.finalX();
+       if ((_lastMinScrollExtent != position.minScrollExtent && finalX < position.minScrollExtent) ||
+               (_lastMaxScrollExtent != position.maxScrollExtent && finalX > position.maxScrollExtent)) {
+         // only restart ballistic activity when extent change affects our simulation
+         delegate.goBallistic(velocity);
+       }
+       _lastMinScrollExtent = position.minScrollExtent;
+       _lastMaxScrollExtent = position.maxScrollExtent;
+     } else {
+       delegate.goBallistic(velocity);
+     }
   }
 
   void _tick() {
