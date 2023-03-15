@@ -568,9 +568,9 @@ class BallisticScrollActivity extends ScrollActivity {
     final ScrollPosition? position = _scrollPosition;
      if (position != null && _simulation is ScrollSimulation) {
        final ScrollSimulation simulation = _simulation as ScrollSimulation;
-       final double finalX = simulation.finalX();
-       if ((_lastMinScrollExtent != position.minScrollExtent && finalX < position.minScrollExtent) ||
-               (_lastMaxScrollExtent != position.maxScrollExtent && finalX > position.maxScrollExtent)) {
+       final double? finalX = simulation.finalX();
+       if (finalX != null && ((_lastMinScrollExtent != position.minScrollExtent && finalX < position.minScrollExtent) ||
+               (_lastMaxScrollExtent != position.maxScrollExtent && finalX > position.maxScrollExtent))) {
          // only restart ballistic activity when extent change affects our simulation
          delegate.goBallistic(velocity);
        }

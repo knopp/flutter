@@ -13,7 +13,7 @@ import 'package:flutter/physics.dart';
    ScrollSimulation({super.tolerance});
 
    /// Provides destination position or null if can not be determined
-   double finalX();
+   double? finalX();
 }
 
 /// An implementation of scroll physics that matches iOS.
@@ -98,8 +98,12 @@ class BouncingScrollSimulation extends ScrollSimulation {
   double _timeOffset = 0.0;
 
   @override
-  double finalX() {
-    return _frictionSimulation.finalX;
+  double? finalX() {
+    if (_springTime.isFinite) {
+      return _frictionSimulation.finalX;
+    } else {
+      return null;
+    }
   }
 
   Simulation _underscrollSimulation(double x, double dx) {
