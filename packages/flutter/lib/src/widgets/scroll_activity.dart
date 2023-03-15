@@ -582,6 +582,10 @@ class BallisticScrollActivity extends ScrollActivity {
   }
 
   void _tick() {
+    // allow interaction when finishing scrolling
+    if (velocity.abs() < 100 && _scrollPosition != null) {
+       _scrollPosition!.context.setIgnorePointer(false);
+    }
     if (!applyMoveTo(_controller.value)) {
       delegate.goIdle();
     }
