@@ -1134,12 +1134,19 @@ static void SetThreadPriority(FlutterThreadPriority priority) {
   [_platformViewController reset];
 }
 
+// This will be called on UI thread, which maybe or may not be platform thread,
+// depending on the configuration.
 - (void)onVSync:(uintptr_t)baton {
-  @synchronized(_vsyncWaiters) {
+  auto block = ^{
     // TODO(knopp): Use vsync waiter for correct view.
     // https://github.com/flutter/flutter/issues/142845
     FlutterVSyncWaiter* waiter = [_vsyncWaiters objectForKey:@(kFlutterImplicitViewId)];
     [waiter waitForVSync:baton];
+  };
+  if ([NSThread isMainThread]) {
+    block();
+  } else {
+    [FlutterRunLoop.mainRunLoop performBlock:block];
   }
 }
 
