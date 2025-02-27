@@ -28,7 +28,9 @@ class PopupWindowContent extends StatelessWidget {
             controller: controller),
         child: Scaffold(
             backgroundColor: Colors.transparent,
-            body: SizedBox.expand(
+            body: SizedBox(
+                width: windowSettings.popupSizeNotifier.value.width,
+                height: windowSettings.popupSizeNotifier.value.height,
                 child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -71,8 +73,7 @@ class PopupWindowContent extends StatelessWidget {
                                             key: key,
                                             parent: controller,
                                             controller: PopupWindowController(
-                                              parent: windowManagerModel
-                                                  .selected!.rootView,
+                                              parent: controller.rootView,
                                               onDestroyed: () =>
                                                   windowManagerModel
                                                       .remove(key),
@@ -81,27 +82,25 @@ class PopupWindowContent extends StatelessWidget {
                                                       .remove(key),
                                               size: windowSettings
                                                   .popupSizeNotifier.value,
-                                              anchorRect: windowSettings
-                                                      .anchorToWindowNotifier
-                                                      .value
-                                                  ? null
-                                                  : windowSettings
-                                                      .anchorRectNotifier.value,
-                                              positioner: WindowPositioner(
-                                                  parentAnchor:
-                                                      positionerSettingsModifier
-                                                          .selected
-                                                          .parentAnchor,
-                                                  childAnchor:
-                                                      positionerSettingsModifier
-                                                          .selected.childAnchor,
-                                                  offset:
-                                                      positionerSettingsModifier
-                                                          .selected.offset,
-                                                  constraintAdjustment:
-                                                      positionerSettingsModifier
-                                                          .selected
-                                                          .constraintAdjustments),
+                                              sizeConstraints:
+                                                  BoxConstraints.loose(
+                                                      const Size(500, 500)),
+                                              anchorRect: null,
+                                              positioner:
+                                                  const WindowPositioner(
+                                                      parentAnchor:
+                                                          WindowPositionerAnchor
+                                                              .topLeft,
+                                                      childAnchor:
+                                                          WindowPositionerAnchor
+                                                              .topLeft,
+                                                      offset: Offset(50, 50),
+                                                      constraintAdjustment: {
+                                                    WindowPositionerConstraintAdjustment
+                                                        .slideX,
+                                                    WindowPositionerConstraintAdjustment
+                                                        .slideY
+                                                  }),
                                             )));
                                   },
                                   child: const Text('Another popup')),

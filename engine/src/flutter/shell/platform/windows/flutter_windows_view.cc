@@ -383,27 +383,20 @@ void FlutterWindowsView::SendWindowMetrics(size_t width,
   event.pixel_ratio = pixel_ratio;
   event.view_id = view_id_;
 
-  if (!IsWindowVisible(GetWindowHandle())) {
-    if (min_size) {
-      event.min_width = min_size->width();
-      event.min_height = min_size->height();
-    } else {
-      event.min_width = event.width;
-      event.min_height = event.height;
-    }
-
-    if (max_size) {
-      event.max_width = max_size->width();
-      event.max_height = max_size->height();
-    } else {
-      event.max_width = event.width;
-      event.max_height = event.height;
-    }
+  if (min_size) {
+    event.min_width = min_size->width();
+    event.min_height = min_size->height();
   } else {
-    event.min_width = width;
-    event.min_height = height;
-    event.max_width = width;
-    event.max_height = height;
+    event.min_width = event.width;
+    event.min_height = event.height;
+  }
+
+  if (max_size) {
+    event.max_width = max_size->width();
+    event.max_height = max_size->height();
+  } else {
+    event.max_width = event.width;
+    event.max_height = event.height;
   }
 
   engine_->SendWindowMetricsEvent(event);
