@@ -26,9 +26,7 @@ class PopupWindowContent extends StatelessWidget {
             windowSettings: windowSettings,
             positionerSettingsModifier: positionerSettingsModifier,
             controller: controller),
-        child: Scaffold(
-            backgroundColor: Colors.transparent,
-            body: SizedBox(
+        child: SizedBox(
                 width: windowSettings.popupSizeNotifier.value.width,
                 height: windowSettings.popupSizeNotifier.value.height,
                 child: Container(
@@ -110,6 +108,6 @@ class PopupWindowContent extends StatelessWidget {
                           ),
                         ),
                       ),
-                    )))));
+                    ))));
   }
 }
