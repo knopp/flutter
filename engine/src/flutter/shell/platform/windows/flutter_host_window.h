@@ -27,18 +27,11 @@ class FlutterHostWindow {
   // via |FlutterHostWindow::GetWindowHandle|.
   FlutterHostWindow(FlutterHostWindowController* controller,
                     WindowCreationSettings const& settings);
-  // Creates a |FlutterHostWindow| from an existing |view| associated with a
-  // top-level |hwnd|. Used when the native window is created by the runner.
-  FlutterHostWindow(FlutterHostWindowController* controller,
-                    HWND hwnd,
-                    FlutterWindowsView* view);
+
   virtual ~FlutterHostWindow();
 
   // Returns the instance pointer for |hwnd| or nullptr if invalid.
   static FlutterHostWindow* GetThisFromHandle(HWND hwnd);
-
-  // Returns the current window state.
-  WindowState GetState() const;
 
   // Returns the backing window handle, or nullptr if the native window is not
   // created or has already been destroyed.
@@ -68,12 +61,6 @@ class FlutterHostWindow {
   // Inserts |content| into the window tree.
   void SetChildContent(HWND content);
 
-  // Sets the window state.
-  void SetState(WindowState state);
-
-  // Sets the window title.
-  void SetTitle(std::string_view title) const;
-
   // Controller for this window.
   FlutterHostWindowController* const window_controller_ = nullptr;
 
@@ -84,9 +71,6 @@ class FlutterHostWindow {
 
   // The window archetype.
   WindowArchetype archetype_ = WindowArchetype::kRegular;
-
-  // Indicates if closing this window will quit the application.
-  bool quit_on_close_ = false;
 
   // Backing handle for this window.
   HWND window_handle_ = nullptr;
@@ -99,9 +83,6 @@ class FlutterHostWindow {
 
   // The maximum size of the window's client area, if defined.
   std::optional<Size> max_size_;
-
-  // The window state.
-  WindowState state_ = WindowState::kRestored;
 
   FML_DISALLOW_COPY_AND_ASSIGN(FlutterHostWindow);
 };

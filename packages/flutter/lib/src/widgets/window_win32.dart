@@ -35,13 +35,13 @@ class WindowingOwnerWin32 extends WindowingOwner {
   @override
   RegularWindowController createRegularWindowController({
     required Size size,
-    VoidCallback? onDestroyed,
+    required RegularWindowControllerDelegate delegate,
     BoxConstraints? sizeConstraints,
   }) {
     return RegularWindowControllerWin32(
       owner: this,
+      delegate: delegate,
       size: size,
-      onDestroyed: onDestroyed,
       sizeConstraints: sizeConstraints,
     );
   }
@@ -77,26 +77,29 @@ class WindowingOwnerWin32 extends WindowingOwner {
     }
   }
 
+  @override
+  bool hasTopLevelWindows() {
+    return _hasTopLevelWindows(PlatformDispatcher.instance.engineId!);
+  }
+
+  @Native<Bool Function(Int64)>(symbol: 'flutter_windowing_has_top_level_windows')
+  external static bool _hasTopLevelWindows(int engineId);
+
   @Native<Void Function(Int64, Pointer<_WindowingInitRequest>)>(
     symbol: 'flutter_windowing_initialize',
   )
   external static void _initializeWindowing(int engineId, Pointer<_WindowingInitRequest> request);
-
-  @override
-  bool hasTopLevelWindows() {
-    // TODO: implement hasTopLevelWindows
-    throw UnimplementedError();
-  }
 }
 
 class RegularWindowControllerWin32 extends RegularWindowController
     implements WindowsMessageHandler {
   RegularWindowControllerWin32({
     required WindowingOwnerWin32 owner,
+    required RegularWindowControllerDelegate delegate,
     BoxConstraints? sizeConstraints,
     required Size size,
-    this.onDestroyed,
   }) : _owner = owner,
+       _delegate = delegate,
        super.empty() {
     owner.addMessageHandler(this);
     final Pointer<_WindowCreationRequest> request =
@@ -115,10 +118,9 @@ class RegularWindowControllerWin32 extends RegularWindowController
     setView(flutterView);
   }
 
-  VoidCallback? onDestroyed;
-
   @override
   Size get size {
+    _ensureNotDestroyed();
     final Pointer<_Size> size = ffi.calloc<_Size>();
     _getWindowSize(getWindowHandle(), size);
     final Size result = Size(size.ref.width, size.ref.height);
@@ -128,12 +130,14 @@ class RegularWindowControllerWin32 extends RegularWindowController
 
   @override
   WindowState get state {
+    _ensureNotDestroyed();
     final int state = _getWindowState(getWindowHandle());
     return WindowState.values[state];
   }
 
   @override
   void modify({Size? size, String? title, WindowState? state}) {
+    _ensureNotDestroyed();
     if (state != null) {
       setWindowState(state);
     }
@@ -146,23 +150,34 @@ class RegularWindowControllerWin32 extends RegularWindowController
   }
 
   void setWindowState(WindowState state) {
+    _ensureNotDestroyed();
     _setWindowState(getWindowHandle(), state.index);
   }
 
   void setWindowTitle(String title) {
+    _ensureNotDestroyed();
     final Pointer<ffi.Utf16> titlePointer = title.toNativeUtf16();
     _setWindowTitle(getWindowHandle(), titlePointer);
     ffi.calloc.free(titlePointer);
   }
 
   void setWindowSize(Size size) {
+    _ensureNotDestroyed();
     _setWindowSize(getWindowHandle(), size.width, size.height);
   }
 
   Pointer<Void> getWindowHandle() {
+    _ensureNotDestroyed();
     return _getWindowHandle(PlatformDispatcher.instance.engineId!, rootView.viewId);
   }
 
+  void _ensureNotDestroyed() {
+    if (_destroyed) {
+      throw StateError('Window has been destroyed.');
+    }
+  }
+
+  final RegularWindowControllerDelegate _delegate;
   bool _destroyed = false;
 
   @override
@@ -170,9 +185,9 @@ class RegularWindowControllerWin32 extends RegularWindowController
     if (_destroyed) {
       return;
     }
+    _destroyWindow(getWindowHandle());;
     _destroyed = true;
-    onDestroyed?.call();
-    _destroyWindow(getWindowHandle());
+    _delegate.onWindowDestroyed();
     _owner.removeMessageHandler(this);
   }
 
@@ -192,8 +207,7 @@ class RegularWindowControllerWin32 extends RegularWindowController
     }
 
     if (message == WM_CLOSE) {
-      // WM_CLOSE would call DestroyWindow, we want to do that ourselves.
-      destroy();
+      _delegate.onWindowCloseRequested(this);
       return 0;
     } else if (message == WM_SIZE) {
       notifyListeners();

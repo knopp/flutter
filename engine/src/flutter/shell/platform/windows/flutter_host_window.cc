@@ -15,17 +15,6 @@ namespace {
 
 constexpr wchar_t kWindowClassName[] = L"FLUTTER_HOST_WINDOW";
 
-// RAII wrapper for global Win32 ATOMs.
-struct AtomRAII {
-  explicit AtomRAII(wchar_t const* name) : atom(GlobalAddAtom(name)) {}
-  ~AtomRAII() { GlobalDeleteAtom(atom); }
-  ATOM const atom;
-};
-
-// Atom used as the identifier for a window property that stores a pointer to a
-// |FlutterHostWindow| instance.
-AtomRAII const kWindowPropAtom(kWindowClassName);
-
 // Clamps |size| to the size of the virtual screen. Both the parameter and
 // return size are in physical coordinates.
 flutter::Size ClampToVirtualScreen(flutter::Size size) {
@@ -272,31 +261,6 @@ void UpdateTheme(HWND window) {
   }
 }
 
-// Associates |instance| with the window |hwnd| as a window property.
-// Can be retrieved later using GetInstanceProperty.
-// Logs an error if setting the property fails.
-void SetInstanceProperty(HWND hwnd, flutter::FlutterHostWindow* instance) {
-  if (!SetProp(hwnd, MAKEINTATOM(kWindowPropAtom.atom), instance)) {
-    FML_LOG(ERROR) << "Failed to set up instance entry in the property list: "
-                   << GetLastErrorAsString();
-  }
-}
-
-// Retrieves the instance pointer set with SetInstanceProperty, or returns
-// nullptr if the property was not set.
-flutter::FlutterHostWindow* GetInstanceProperty(HWND hwnd) {
-  return reinterpret_cast<flutter::FlutterHostWindow*>(
-      GetProp(hwnd, MAKEINTATOM(kWindowPropAtom.atom)));
-}
-
-// Removes the instance property associated with |hwnd| previously set with
-// SetInstanceProperty. Logs an error if the property is not found.
-void RemoveInstanceProperty(HWND hwnd) {
-  if (!RemoveProp(hwnd, MAKEINTATOM(kWindowPropAtom.atom))) {
-    FML_LOG(ERROR) << "Failed to locate instance entry in the property list";
-  }
-}
-
 }  // namespace
 
 namespace flutter {
@@ -423,51 +387,16 @@ FlutterHostWindow::FlutterHostWindow(FlutterHostWindowController* controller,
 
   SetChildContent(view_controller_->view()->GetWindowHandle());
 
-  state_ = settings.state.value_or(WindowState::kRestored);
-
   // TODO(loicsharma): Hide the window until the first frame is rendered.
   // Single window apps use the engine's next frame callback to show the
   // window. This doesn't work for multi window apps as the engine cannot have
   // multiple next frame callbacks. If multiple windows are created, only the
   // last one will be shown.
-  UINT const cmd_show = [&]() {
-    if (archetype_ == WindowArchetype::kRegular) {
-      switch (state_) {
-        case WindowState::kRestored:
-          return SW_SHOWNORMAL;
-          break;
-        case WindowState::kMaximized:
-          return SW_SHOWMAXIMIZED;
-          break;
-        case WindowState::kMinimized:
-          return SW_SHOWMINIMIZED;
-          break;
-        default:
-          FML_UNREACHABLE();
-      }
-    }
-    return SW_SHOWNORMAL;
-  }();
-  ShowWindow(hwnd, cmd_show);
-
-  window_handle_ = hwnd;
-}
-
-FlutterHostWindow::FlutterHostWindow(FlutterHostWindowController* controller,
-                                     HWND hwnd,
-                                     FlutterWindowsView* view)
-    : window_controller_(controller), window_handle_(hwnd) {
-  SetInstanceProperty(hwnd, this);
-  FML_CHECK(view != nullptr);
-  child_content_ = view->GetWindowHandle();
+  ShowWindow(hwnd, SW_SHOWNORMAL);
 }
 
 FlutterHostWindow::~FlutterHostWindow() {
-  RemoveInstanceProperty(window_handle_);
-  HWND const hwnd = std::exchange(window_handle_, nullptr);
-
   if (view_controller_) {
-    DestroyWindow(hwnd);
     // Unregister the window class. Fail silently if other windows are still
     // using the class, as only the last window can successfully unregister it.
     if (!UnregisterClass(kWindowClassName, GetModuleHandle(nullptr))) {
@@ -478,15 +407,12 @@ FlutterHostWindow::~FlutterHostWindow() {
 }
 
 FlutterHostWindow* FlutterHostWindow::GetThisFromHandle(HWND hwnd) {
-  return GetInstanceProperty(hwnd);
+  return reinterpret_cast<FlutterHostWindow*>(
+      GetWindowLongPtr(hwnd, GWLP_USERDATA));
 }
 
 HWND FlutterHostWindow::GetWindowHandle() const {
   return window_handle_;
-}
-
-WindowState FlutterHostWindow::GetState() const {
-  return state_;
 }
 
 void FlutterHostWindow::FocusViewOf(FlutterHostWindow* window) {
@@ -503,7 +429,7 @@ LRESULT FlutterHostWindow::WndProc(HWND hwnd,
     auto* const create_struct = reinterpret_cast<CREATESTRUCT*>(lparam);
     auto* const window =
         static_cast<FlutterHostWindow*>(create_struct->lpCreateParams);
-    SetInstanceProperty(hwnd, window);
+    SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
     window->window_handle_ = hwnd;
 
     EnableFullDpiSupportIfAvailable(hwnd);
@@ -630,30 +556,6 @@ void FlutterHostWindow::SetChildContent(HWND content) {
   MoveWindow(content, client_rect.left, client_rect.top,
              client_rect.right - client_rect.left,
              client_rect.bottom - client_rect.top, true);
-}
-
-void FlutterHostWindow::SetState(WindowState state) {
-  WINDOWPLACEMENT window_placement = {.length = sizeof(WINDOWPLACEMENT)};
-  GetWindowPlacement(window_handle_, &window_placement);
-  window_placement.showCmd = [&]() {
-    switch (state) {
-      case WindowState::kRestored:
-        return SW_RESTORE;
-      case WindowState::kMaximized:
-        return SW_MAXIMIZE;
-      case WindowState::kMinimized:
-        return SW_MINIMIZE;
-      default:
-        FML_UNREACHABLE();
-    };
-  }();
-  SetWindowPlacement(window_handle_, &window_placement);
-  state_ = state;
-}
-
-void FlutterHostWindow::SetTitle(std::string_view title) const {
-  std::wstring title_wide = StringToWstring(title);
-  SetWindowText(window_handle_, title_wide.c_str());
 }
 
 }  // namespace flutter

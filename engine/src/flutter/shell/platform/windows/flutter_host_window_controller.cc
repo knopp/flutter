@@ -45,12 +45,19 @@ void flutter_windowing_initialize(
 }
 
 FLUTTER_EXPORT
+bool flutter_windowing_has_top_level_windows(int64_t engine_id) {
+  flutter::FlutterWindowsEngine* engine =
+      flutter::FlutterWindowsEngine::GetEngineForId(engine_id);
+  return engine->get_host_window_controller()->HasTopLevelWindows();
+}
+
+FLUTTER_EXPORT
 int64_t flutter_create_regular_window(
     int64_t engine_id,
     const flutter::WindowCreationRequest* request) {
   flutter::FlutterWindowsEngine* engine =
       flutter::FlutterWindowsEngine::GetEngineForId(engine_id);
-  return engine->get_host_window_controller()->CreateWindow_(request);
+  return engine->get_host_window_controller()->CreateRegularWindow(request);
 }
 
 FLUTTER_EXPORT
@@ -108,9 +115,8 @@ void flutter_set_window_state(HWND hwnd, int64_t state) {
   }
 }
 
-FLUTTER_EXPORT void flutter_set_window_size(HWND hwnd,
-                                            double width,
-                                            double height) {
+FLUTTER_EXPORT
+void flutter_set_window_size(HWND hwnd, double width, double height) {
   flutter::FlutterHostWindow* window =
       flutter::FlutterHostWindow::GetThisFromHandle(hwnd);
   if (window) {
@@ -131,6 +137,7 @@ void FlutterHostWindowController::Initialize(
   on_message_ = request->on_message;
   isolate_ = Isolate();
 
+  // Send messages accumulated before isolate called this method.
   for (WindowsMessage& message : pending_messages_) {
     IsolateScope scope(*isolate_);
     on_message_(&message);
@@ -138,7 +145,11 @@ void FlutterHostWindowController::Initialize(
   pending_messages_.clear();
 }
 
-FlutterViewId FlutterHostWindowController::CreateWindow_(
+bool FlutterHostWindowController::HasTopLevelWindows() const {
+  return !active_windows_.empty();
+}
+
+FlutterViewId FlutterHostWindowController::CreateRegularWindow(
     const WindowCreationRequest* request) {
   WindowCreationSettings settings;
   settings.size = Size(request->width, request->height);
@@ -147,13 +158,11 @@ FlutterViewId FlutterHostWindowController::CreateWindow_(
     settings.max_size = Size(request->max_width, request->max_height);
   }
   auto window = std::make_unique<FlutterHostWindow>(this, settings);
-
   if (!window->GetWindowHandle()) {
     FML_LOG(ERROR) << "Failed to create host window";
     return 0;
   }
   FlutterViewId const view_id = window->view_controller_->view()->view_id();
-  WindowState const state = window->state_;
   active_windows_[window->GetWindowHandle()] = std::move(window);
   return view_id;
 }

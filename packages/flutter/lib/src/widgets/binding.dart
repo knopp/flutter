@@ -1423,7 +1423,7 @@ mixin WidgetsBinding
   /// implementation.
   @protected
   WindowingOwner createWindowingOwner() {
-    return WindowingOwner.defaultOwner();
+    return WindowingOwner.createDefaultOwner();
   }
 }
 

@@ -61,7 +61,7 @@ abstract class WindowController with ChangeNotifier {
   /// The current size of the window. This may differ from the requested size.
   Size get size;
 
-  /// Destroys this window.
+  /// Destroys this window. It is permissible to call this method multiple times.
   void destroy();
 
   /// The root view associated to this window, which is unique to each window.
@@ -70,11 +70,11 @@ abstract class WindowController with ChangeNotifier {
 }
 
 /// Delegate class for regular window controller.
-abstract mixin class RegularWindowDelegate {
+mixin class RegularWindowControllerDelegate {
   /// Invoked when user attempts to close the window. Default implementation
   /// destroys the window. Subclass can override the behavior to delay
   /// or prevent the window from closing.
-  void onWindowCloseRequest(RegularWindowController controller) {
+  void onWindowCloseRequested(RegularWindowController controller) {
     controller.destroy();
   }
 
@@ -83,6 +83,7 @@ abstract mixin class RegularWindowDelegate {
   void onWindowDestroyed() {
     final WindowingOwner owner = WidgetsBinding.instance.windowingOwner;
     if (!owner.hasTopLevelWindows()) {
+      // No more top-level windows, exit the application.
       ServicesBinding.instance.exitApplication(AppExitType.cancelable);
     }
   }
@@ -120,20 +121,20 @@ abstract class RegularWindowController extends WindowController {
   /// [title] the title of the window
   /// [state] the initial state of the window
   /// [sizeConstraints] the size constraints of the window
-  /// [onDestroyed] a callback that is called when the window is destroyed
+  /// [delegate] optional delegate for the controller controller.
   /// [size] the size of the window
   factory RegularWindowController({
     String? title,
     WindowState? state,
     BoxConstraints? sizeConstraints,
-    VoidCallback? onDestroyed,
+    RegularWindowControllerDelegate? delegate,
     required Size size,
   }) {
     WidgetsFlutterBinding.ensureInitialized();
     final WindowingOwner owner = WidgetsBinding.instance.windowingOwner;
     final RegularWindowController controller = owner.createRegularWindowController(
       size: size,
-      onDestroyed: onDestroyed,
+      delegate: delegate ?? RegularWindowControllerDelegate(),
       sizeConstraints: sizeConstraints,
     );
     if (title != null || state != null) {
@@ -172,14 +173,16 @@ abstract class WindowingOwner {
   /// Creates a [RegularWindowController] with the provided properties.
   RegularWindowController createRegularWindowController({
     required Size size,
-    VoidCallback? onDestroyed,
+    required RegularWindowControllerDelegate delegate,
     BoxConstraints? sizeConstraints,
   });
 
+  /// Returns whether application has any top level windows created by this
+  /// windowing owner.
   bool hasTopLevelWindows();
 
   /// Creates default windowing owner for standard desktop embedders.
-  static WindowingOwner defaultOwner() {
+  static WindowingOwner createDefaultOwner() {
     if (defaultTargetPlatform == TargetPlatform.windows) {
       return WindowingOwnerWin32();
     } else {
@@ -193,7 +196,7 @@ class _FallbackWindowingOwner extends WindowingOwner {
   @override
   RegularWindowController createRegularWindowController({
     required Size size,
-    VoidCallback? onDestroyed,
+    required RegularWindowControllerDelegate delegate,
     BoxConstraints? sizeConstraints,
   }) {
     throw UnsupportedError(

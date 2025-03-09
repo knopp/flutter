@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:multi_window_ref_app/app/window_controller_render.dart';
 
+import 'regular_window_content.dart';
 import 'window_settings.dart';
 import 'window_settings_dialog.dart';
 import 'window_manager_model.dart';
@@ -245,7 +246,9 @@ class _WindowCreatorCard extends StatelessWidget {
                     windowManagerModel.add(KeyedWindowController(
                         key: key,
                         controller: RegularWindowController(
-                            onDestroyed: () => windowManagerModel.remove(key),
+                            delegate: WindowControllerDelegate(
+                              onDestroyed: () => windowManagerModel.remove(key),
+                            ),
                             title: "Regular",
                             size: windowSettings.regularSize)));
                   },

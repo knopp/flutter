@@ -40,7 +40,9 @@ class FlutterHostWindowController {
 
   void Initialize(const WindowingInitRequest* request);
 
-  FlutterViewId CreateWindow_(const WindowCreationRequest* request);
+  bool HasTopLevelWindows() const;
+
+  FlutterViewId CreateRegularWindow(const WindowCreationRequest* request);
 
   // Message handler called by |FlutterHostWindow::WndProc| to process window
   // messages before delegating them to the host window. This allows the

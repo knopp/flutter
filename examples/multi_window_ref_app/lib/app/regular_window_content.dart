@@ -20,6 +20,18 @@ class RegularWindowContent extends StatefulWidget {
   State<StatefulWidget> createState() => _RegularWindowContentState();
 }
 
+class WindowControllerDelegate extends RegularWindowControllerDelegate {
+  WindowControllerDelegate({required this.onDestroyed});
+
+  @override
+  void onWindowDestroyed() {
+    onDestroyed();
+    super.onWindowDestroyed();
+  }
+
+  final VoidCallback onDestroyed;
+}
+
 class _RegularWindowContentState extends State<RegularWindowContent>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animation;
@@ -88,8 +100,10 @@ class _RegularWindowContentState extends State<RegularWindowContent>
                   widget.windowManagerModel.add(KeyedWindowController(
                       key: key,
                       controller: RegularWindowController(
-                          onDestroyed: () =>
-                              widget.windowManagerModel.remove(key),
+                          delegate: WindowControllerDelegate(
+                            onDestroyed: () =>
+                                widget.windowManagerModel.remove(key),
+                          ),
                           title: "Regular",
                           size: widget.windowSettings.regularSize)));
                 },
