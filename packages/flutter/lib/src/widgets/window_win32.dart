@@ -6,6 +6,7 @@ import 'package:ffi/ffi.dart' as ffi;
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/src/widgets/window_positioning.dart';
 
 abstract class WindowsMessageHandler {
   /// Handles a window message. Returned value, if not null will be
@@ -89,6 +90,18 @@ class WindowingOwnerWin32 extends WindowingOwner {
     symbol: 'flutter_windowing_initialize',
   )
   external static void _initializeWindowing(int engineId, Pointer<_WindowingInitRequest> request);
+
+  @override
+  PopupWindowController createPopupWindowController({
+    BoxConstraints? sizeConstraints,
+    Rect? anchorRect,
+    required WindowPositioner position,
+    required FlutterView parent,
+    required Size size,
+  }) {
+    // TODO: implement createPopupWindowController
+    throw UnimplementedError();
+  }
 }
 
 class RegularWindowControllerWin32 extends RegularWindowController
@@ -185,7 +198,8 @@ class RegularWindowControllerWin32 extends RegularWindowController
     if (_destroyed) {
       return;
     }
-    _destroyWindow(getWindowHandle());;
+    _destroyWindow(getWindowHandle());
+    ;
     _destroyed = true;
     _delegate.onWindowDestroyed();
     _owner.removeMessageHandler(this);

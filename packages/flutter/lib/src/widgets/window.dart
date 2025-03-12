@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import 'window_positioning.dart';
 import 'window_linux.dart';
 import 'window_macos.dart';
 import 'window_win32.dart';
@@ -16,6 +17,9 @@ import 'window_win32.dart';
 enum WindowArchetype {
   /// Defines a traditional window
   regular,
+
+  /// Defines a popup window
+  popup,
 }
 
 /// Defines the possible states that a window can be in.
@@ -167,6 +171,30 @@ abstract class RegularWindowController extends WindowController {
   void modify({Size? size, String? title, WindowState? state});
 }
 
+abstract class PopupWindowController extends WindowController {
+  factory PopupWindowController({
+    BoxConstraints? sizeConstraints,
+    Rect? anchorRect,
+    WindowPositioner position = const WindowPositioner(),
+    required FlutterView parent,
+    required Size size,
+  }) {
+    WidgetsFlutterBinding.ensureInitialized();
+    final WindowingOwner owner = WidgetsBinding.instance.windowingOwner;
+    return owner.createPopupWindowController(
+      size: size,
+      sizeConstraints: sizeConstraints,
+      anchorRect: anchorRect,
+      position: position,
+      parent: parent,
+    );
+  }
+
+  @protected
+  /// Creates an empty [PopupWindowController].
+  PopupWindowController.empty();
+}
+
 /// [WindowingOwner] is responsible for creating and managing window controllers.
 ///
 /// Custom subclass can be provided by subclassing [WidgetsBinding] and
@@ -177,6 +205,14 @@ abstract class WindowingOwner {
     required Size size,
     required RegularWindowControllerDelegate delegate,
     BoxConstraints? sizeConstraints,
+  });
+
+  PopupWindowController createPopupWindowController({
+    BoxConstraints? sizeConstraints,
+    Rect? anchorRect,
+    required WindowPositioner position,
+    required FlutterView parent,
+    required Size size,
   });
 
   /// Returns whether application has any top level windows created by this
@@ -214,6 +250,20 @@ class _FallbackWindowingOwner extends WindowingOwner {
   @override
   bool hasTopLevelWindows() {
     return false;
+  }
+
+  @override
+  PopupWindowController createPopupWindowController({
+    BoxConstraints? sizeConstraints,
+    Rect? anchorRect,
+    required WindowPositioner position,
+    required FlutterView parent,
+    required Size size,
+  }) {
+    throw UnsupportedError(
+      'Current platform does not support windowing.\n'
+      'Implement a WindowingDelegate for this platform.',
+    );
   }
 }
 

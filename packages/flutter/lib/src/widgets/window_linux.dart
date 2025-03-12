@@ -4,6 +4,7 @@ import 'dart:ui' show FlutterView;
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/binding.dart';
+import 'package:flutter/src/widgets/window_positioning.dart';
 
 class WindowingOwnerLinux extends WindowingOwner {
   @override
@@ -28,6 +29,89 @@ class WindowingOwnerLinux extends WindowingOwner {
   }
 
   final List<WindowController> _activeControllers = <WindowController>[];
+
+  @override
+  PopupWindowController createPopupWindowController({
+    BoxConstraints? sizeConstraints,
+    Rect? anchorRect,
+    required WindowPositioner position,
+    required FlutterView parent,
+    required Size size,
+  }) {
+    return PopupWindowControllerLinux(
+      parent: parent,
+      size: size,
+      anchorRect: anchorRect,
+      position: position,
+      sizeConstraints: sizeConstraints,
+    );
+  }
+}
+
+class PopupWindowControllerLinux extends PopupWindowController {
+  PopupWindowControllerLinux({
+    required FlutterView parent,
+    required Size size,
+    Rect? anchorRect,
+    required WindowPositioner position,
+    BoxConstraints? sizeConstraints,
+  }) : super.empty() {
+    final Pointer<Void> parentWindow = _getWindowHandle(
+      PlatformDispatcher.instance.engineId!,
+      parent.viewId,
+    );
+    final Pointer<_PopupWindowCreationRequest> request =
+        ffi.calloc<_PopupWindowCreationRequest>()
+          ..ref.width = size.width
+          ..ref.height = size.height
+          ..ref.minWidth = sizeConstraints?.minWidth ?? 0
+          ..ref.minHeight = sizeConstraints?.minHeight ?? 0
+          ..ref.maxWidth = sizeConstraints?.maxWidth ?? 0
+          ..ref.maxHeight = sizeConstraints?.maxHeight ?? 0;
+    // TODO: Set fields for position and anchorRect.
+    final int viewId = _createWindow(PlatformDispatcher.instance.engineId!, parentWindow, request);
+    ffi.calloc.free(request);
+    final FlutterView flutterView = WidgetsBinding.instance.platformDispatcher.views.firstWhere(
+      (FlutterView view) => view.viewId == viewId,
+    );
+    setView(flutterView);
+  }
+
+  Pointer<Void> getWindowHandle() {
+    return _getWindowHandle(PlatformDispatcher.instance.engineId!, rootView.viewId);
+  }
+
+  @override
+  void destroy() {
+    if (_destroyed) {
+      return;
+    }
+    _destroyed = true;
+    _destroyWindow(PlatformDispatcher.instance.engineId!, rootView.viewId);
+  }
+
+  @override
+  Size get size {
+    final Pointer<_Size> size = ffi.calloc<_Size>();
+    _getWindowSize(getWindowHandle(), size);
+    final Size result = Size(size.ref.width, size.ref.height);
+    ffi.calloc.free(size);
+    return result;
+  }
+
+  @override
+  WindowArchetype get type => WindowArchetype.popup;
+
+  bool _destroyed = false;
+
+  @Native<Int64 Function(Int64, Pointer<Void>, Pointer<_PopupWindowCreationRequest>)>(
+    symbol: 'flutter_create_popup_window',
+  )
+  external static int _createWindow(
+    int engineId,
+    Pointer<Void> parentHandle,
+    Pointer<_PopupWindowCreationRequest> request,
+  );
 }
 
 class RegularWindowControllerLinux extends RegularWindowController {
@@ -139,27 +223,6 @@ class RegularWindowControllerLinux extends RegularWindowController {
     symbol: 'flutter_create_regular_window',
   )
   external static int _createWindow(int engineId, Pointer<_WindowCreationRequest> request);
-
-  @Native<Pointer<Void> Function(Int64, Int64)>(symbol: 'flutter_get_window_handle')
-  external static Pointer<Void> _getWindowHandle(int engineId, int viewId);
-
-  @Native<Void Function(Int64, Int64)>(symbol: 'flutter_destroy_window')
-  external static void _destroyWindow(int engineId, int viewId);
-
-  @Native<Void Function(Pointer<Void>, Pointer<_Size>)>(symbol: 'flutter_get_window_size')
-  external static void _getWindowSize(Pointer<Void> windowHandle, Pointer<_Size> size);
-
-  @Native<Void Function(Pointer<Void>, Double, Double)>(symbol: 'gtk_window_resize')
-  external static void _setWindowSize(Pointer<Void> windowHandle, double width, double height);
-
-  @Native<Void Function(Pointer<Void>, Pointer<ffi.Utf8>)>(symbol: 'gtk_window_set_title')
-  external static void _setWindowTitle(Pointer<Void> windowHandle, Pointer<ffi.Utf8> title);
-
-  @Native<Int64 Function(Pointer<Void>)>(symbol: 'flutter_get_window_state')
-  external static int _getWindowState(Pointer<Void> windowHandle);
-
-  @Native<Void Function(Pointer<Void>, Int64)>(symbol: 'flutter_set_window_state')
-  external static void _setWindowState(Pointer<Void> windowHandle, int state);
 }
 
 final class _WindowCreationRequest extends Struct {
@@ -192,3 +255,47 @@ final class _Size extends Struct {
   @Double()
   external double height;
 }
+
+final class _PopupWindowCreationRequest extends Struct {
+  @Double()
+  external double width;
+
+  @Double()
+  external double height;
+
+  @Double()
+  external double minWidth;
+
+  @Double()
+  external double minHeight;
+
+  @Double()
+  external double maxWidth;
+
+  @Double()
+  external double maxHeight;
+
+  // TODO:
+  // Add fields for anchorRect and position.
+}
+
+@Native<Pointer<Void> Function(Int64, Int64)>(symbol: 'flutter_get_window_handle')
+external Pointer<Void> _getWindowHandle(int engineId, int viewId);
+
+@Native<Void Function(Int64, Int64)>(symbol: 'flutter_destroy_window')
+external void _destroyWindow(int engineId, int viewId);
+
+@Native<Void Function(Pointer<Void>, Pointer<_Size>)>(symbol: 'flutter_get_window_size')
+external void _getWindowSize(Pointer<Void> windowHandle, Pointer<_Size> size);
+
+@Native<Void Function(Pointer<Void>, Double, Double)>(symbol: 'gtk_window_resize')
+external void _setWindowSize(Pointer<Void> windowHandle, double width, double height);
+
+@Native<Void Function(Pointer<Void>, Pointer<ffi.Utf8>)>(symbol: 'gtk_window_set_title')
+external void _setWindowTitle(Pointer<Void> windowHandle, Pointer<ffi.Utf8> title);
+
+@Native<Int64 Function(Pointer<Void>)>(symbol: 'flutter_get_window_state')
+external int _getWindowState(Pointer<Void> windowHandle);
+
+@Native<Void Function(Pointer<Void>, Int64)>(symbol: 'flutter_set_window_state')
+external void _setWindowState(Pointer<Void> windowHandle, int state);
