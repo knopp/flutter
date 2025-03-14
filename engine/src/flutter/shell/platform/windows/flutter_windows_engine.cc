@@ -1102,6 +1102,9 @@ bool FlutterWindowsEngine::Present(const FlutterPresentViewInfo* info) {
       }
       // The initial window state is set when handling WM_SHOWWINDOW.
       ShowWindow(host_hwnd, SW_SHOW);
+      if (HWND const child_content = view->GetWindowHandle()) {
+        SetFocus(child_content);
+      }
     }
   }
 

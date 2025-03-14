@@ -909,9 +909,6 @@ LRESULT FlutterHostWindow::HandleMessage(HWND hwnd,
           }
           return 0;
         }
-        if (child_content_ != nullptr) {
-          SetFocus(child_content_);
-        }
       }
       return 0;
 

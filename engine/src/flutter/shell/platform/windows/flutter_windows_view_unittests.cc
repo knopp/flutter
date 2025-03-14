@@ -1693,8 +1693,8 @@ TEST(FlutterWindowsViewTest, FocusTriggersWindowFocus) {
   auto window_binding_handler =
       std::make_unique<NiceMock<MockWindowBindingHandler>>();
   EXPECT_CALL(*window_binding_handler, Focus()).WillOnce(Return(true));
-  std::unique_ptr<FlutterWindowsView> view =
-      engine->CreateView(std::move(window_binding_handler));
+  std::unique_ptr<FlutterWindowsView> view = engine->CreateView(
+      std::move(window_binding_handler), std::nullopt, std::nullopt);
   EXPECT_TRUE(view->Focus());
 }
 
@@ -1702,8 +1702,8 @@ TEST(FlutterWindowsViewTest, OnFocusTriggersSendFocusViewEvent) {
   std::unique_ptr<FlutterWindowsEngine> engine = GetTestEngine();
   auto window_binding_handler =
       std::make_unique<NiceMock<MockWindowBindingHandler>>();
-  std::unique_ptr<FlutterWindowsView> view =
-      engine->CreateView(std::move(window_binding_handler));
+  std::unique_ptr<FlutterWindowsView> view = engine->CreateView(
+      std::move(window_binding_handler), std::nullopt, std::nullopt);
 
   EngineModifier modifier(engine.get());
   bool received_focus_event = false;
