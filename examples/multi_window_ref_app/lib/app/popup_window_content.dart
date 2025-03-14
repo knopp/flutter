@@ -6,7 +6,7 @@ import 'window_settings.dart';
 import 'window_manager_model.dart';
 
 class PopupWindowContent extends StatelessWidget {
-  const PopupWindowContent(
+  PopupWindowContent(
       {super.key,
       required this.controller,
       required this.windowSettings,
@@ -26,88 +26,89 @@ class PopupWindowContent extends StatelessWidget {
             windowSettings: windowSettings,
             positionerSettingsModifier: positionerSettingsModifier,
             controller: controller),
-        child: SizedBox(
-                width: windowSettings.popupSizeNotifier.value.width,
-                height: windowSettings.popupSizeNotifier.value.height,
-                child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.secondary,
-                        ],
-                        stops: const [0.0, 1.0],
-                      ),
-                      borderRadius: BorderRadius.circular(12.0),
+        child: FocusScope(
+          skipTraversal: false,
+          autofocus: true,
+          onFocusChange: (focused) {
+            if (!focused) {
+              controller.destroy();
+            }
+          },
+          child: SizedBox(
+              width: windowSettings.popupSizeNotifier.value.width,
+              height: windowSettings.popupSizeNotifier.value.height,
+              child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.secondary,
+                      ],
+                      stops: const [0.0, 1.0],
                     ),
-                    child: SingleChildScrollView(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12.0),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Popup',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimary,
-                                    ),
-                              ),
-                              const SizedBox(height: 20.0),
-                              ElevatedButton(
-                                  onPressed: () {
-                                    final UniqueKey key = UniqueKey();
-                                    windowManagerModel
-                                        .add(KeyedWindowController(
-                                            key: key,
-                                            parent: controller,
-                                            controller: PopupWindowController(
-                                              parent: controller.rootView,
-                                              onDestroyed: () =>
-                                                  windowManagerModel
-                                                      .remove(key),
-                                              onError: (String error) =>
-                                                  windowManagerModel
-                                                      .remove(key),
-                                              size: windowSettings
-                                                  .popupSizeNotifier.value,
-                                              sizeConstraints:
-                                                  BoxConstraints.loose(
-                                                      const Size(500, 500)),
-                                              anchorRect: null,
-                                              positioner:
-                                                  const WindowPositioner(
-                                                      parentAnchor:
-                                                          WindowPositionerAnchor
-                                                              .topLeft,
-                                                      childAnchor:
-                                                          WindowPositionerAnchor
-                                                              .topLeft,
-                                                      offset: Offset(50, 50),
-                                                      constraintAdjustment: {
-                                                    WindowPositionerConstraintAdjustment
-                                                        .slideX,
-                                                    WindowPositionerConstraintAdjustment
-                                                        .slideY
-                                                  }),
-                                            )));
-                                  },
-                                  child: const Text('Another popup')),
-                              const SizedBox(height: 16.0),
-                              ChildWindowControllerText(controller: controller)
-                            ],
-                          ),
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: SingleChildScrollView(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Popup',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineMedium
+                                  ?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.onPrimary,
+                                  ),
+                            ),
+                            const SizedBox(height: 20.0),
+                            ElevatedButton(
+                                onPressed: () {
+                                  final UniqueKey key = UniqueKey();
+                                  windowManagerModel.add(KeyedWindowController(
+                                      key: key,
+                                      parent: controller,
+                                      controller: PopupWindowController(
+                                        parent: controller.rootView,
+                                        onDestroyed: () =>
+                                            windowManagerModel.remove(key),
+                                        onError: (String error) =>
+                                            windowManagerModel.remove(key),
+                                        size: windowSettings
+                                            .popupSizeNotifier.value,
+                                        sizeConstraints: BoxConstraints.loose(
+                                            const Size(500, 500)),
+                                        anchorRect: null,
+                                        positioner: const WindowPositioner(
+                                            parentAnchor:
+                                                WindowPositionerAnchor.topLeft,
+                                            childAnchor:
+                                                WindowPositionerAnchor.topLeft,
+                                            offset: Offset(50, 50),
+                                            constraintAdjustment: {
+                                              WindowPositionerConstraintAdjustment
+                                                  .slideX,
+                                              WindowPositionerConstraintAdjustment
+                                                  .slideY
+                                            }),
+                                      )));
+                                },
+                                child: const Text('Another popup')),
+                            const SizedBox(height: 16.0),
+                            ChildWindowControllerText(controller: controller)
+                          ],
                         ),
                       ),
-                    ))));
+                    ),
+                  ))),
+        ));
   }
 }
