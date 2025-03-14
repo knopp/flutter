@@ -901,13 +901,9 @@ LRESULT FlutterHostWindow::HandleMessage(HWND hwnd,
     case WM_ACTIVATE:
       if (LOWORD(wparam) != WA_INACTIVE) {
         // Prevent disabled window from being activated using the task switcher
-        if (!IsWindowEnabled(hwnd)) {
-          // Redirect focus and activation to the first enabled descendant
-          if (FlutterHostWindow* enabled_descendant =
-                  FindFirstEnabledDescendant()) {
-            SetActiveWindow(enabled_descendant->GetWindowHandle());
-          }
-          return 0;
+
+        if (child_content_) {
+          SetFocus(child_content_);
         }
       }
       return 0;

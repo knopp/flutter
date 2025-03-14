@@ -730,10 +730,14 @@ void FlutterWindowsEngine::SendKeyEvent(const FlutterKeyEvent& event,
   }
 }
 
+static bool ignoreFocus = false;
+
 void FlutterWindowsEngine::SendViewFocusEvent(
     const FlutterViewFocusEvent& event) {
   if (engine_) {
-    embedder_api_.SendViewFocusEvent(engine_, &event);
+    if (!ignoreFocus) {
+      embedder_api_.SendViewFocusEvent(engine_, &event);
+    }
   }
 }
 
@@ -1063,7 +1067,9 @@ void FlutterWindowsEngine::OnViewFocusChangeRequest(
   }
 
   FlutterWindowsView* view = iterator->second;
+  ignoreFocus = true;
   view->Focus();
+  ignoreFocus = false;
 }
 
 bool FlutterWindowsEngine::Present(const FlutterPresentViewInfo* info) {

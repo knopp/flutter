@@ -154,25 +154,25 @@ LRESULT FlutterHostWindowController::HandleMessage(HWND hwnd,
     }
     case WM_ACTIVATE:
       if (wparam != WA_INACTIVE) {
-        if (FlutterHostWindow* const window =
-                FlutterHostWindow::GetThisFromHandle(hwnd)) {
-          if (window->GetArchetype() != WindowArchetype::kPopup) {
-            // If a non-popup window is activated, close popups for all windows.
-            auto it = windows_.begin();
-            while (it != windows_.end()) {
-              std::size_t const num_popups_closed =
-                  it->second->CloseOwnedPopups();
-              if (num_popups_closed > 0) {
-                it = windows_.begin();
-              } else {
-                ++it;
-              }
-            }
-          } else {
-            // If a popup window is activated, close its owned popups.
-            window->CloseOwnedPopups();
-          }
-        }
+        // if (FlutterHostWindow* const window =
+        //         FlutterHostWindow::GetThisFromHandle(hwnd)) {
+        //   if (window->GetArchetype() != WindowArchetype::kPopup) {
+        //     // If a non-popup window is activated, close popups for all windows.
+        //     auto it = windows_.begin();
+        //     while (it != windows_.end()) {
+        //       std::size_t const num_popups_closed =
+        //           it->second->CloseOwnedPopups();
+        //       if (num_popups_closed > 0) {
+        //         it = windows_.begin();
+        //       } else {
+        //         ++it;
+        //       }
+        //     }
+        //   } else {
+        //     // If a popup window is activated, close its owned popups.
+        //     window->CloseOwnedPopups();
+        //   }
+        // }
       }
       break;
     case WM_ACTIVATEAPP:
