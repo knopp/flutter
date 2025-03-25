@@ -74,7 +74,7 @@ class PopupWindowControllerLinux extends PopupWindowController {
     final FlutterView flutterView = WidgetsBinding.instance.platformDispatcher.views.firstWhere(
       (FlutterView view) => view.viewId == viewId,
     );
-    setView(flutterView);
+    view = flutterView;
   }
 
   Pointer<Void> getWindowHandle() {
@@ -142,7 +142,7 @@ class RegularWindowControllerLinux extends RegularWindowController {
     final FlutterView flutterView = WidgetsBinding.instance.platformDispatcher.views.firstWhere(
       (FlutterView view) => view.viewId == viewId,
     );
-    setView(flutterView);
+    view = flutterView;
     if (title != null) {
       setTitle(title);
     }

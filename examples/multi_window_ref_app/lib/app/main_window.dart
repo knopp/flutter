@@ -149,7 +149,7 @@ class _ActiveWindowsTable extends StatelessWidget {
                   }
                 },
                 cells: [
-                  DataCell(Text('$controller.controller.rootView.viewId')),
+                  DataCell(Text('${controller.controller.rootView.viewId}')),
                   DataCell(
                     ListenableBuilder(
                         listenable: controller.controller,

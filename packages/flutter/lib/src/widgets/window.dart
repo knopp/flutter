@@ -56,8 +56,7 @@ enum WindowState {
 abstract class WindowController with ChangeNotifier {
   @protected
   /// Sets the view associated with this window.
-  // ignore: use_setters_to_change_properties
-  void setView(FlutterView view) {
+  set view(FlutterView view) {
     _view = view;
   }
 
@@ -70,9 +69,14 @@ abstract class WindowController with ChangeNotifier {
   /// Destroys this window. It is permissible to call this method multiple times.
   void destroy();
 
+  /// Returns true if the window associated with the controller has been
+  /// created and is ready to be used. Otherwise, returns false.
+  bool get isReady => _view != null;
+
   /// The root view associated to this window, which is unique to each window.
-  FlutterView get rootView => _view;
-  late final FlutterView _view;
+  FlutterView get rootView => _view!;
+
+  FlutterView? _view;
 }
 
 /// Delegate class for regular window controller.

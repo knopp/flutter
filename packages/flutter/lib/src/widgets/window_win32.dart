@@ -128,7 +128,7 @@ class RegularWindowControllerWin32 extends RegularWindowController
     final FlutterView flutterView = WidgetsBinding.instance.platformDispatcher.views.firstWhere(
       (FlutterView view) => view.viewId == viewId,
     );
-    setView(flutterView);
+    view = flutterView;
   }
 
   @override
@@ -199,7 +199,6 @@ class RegularWindowControllerWin32 extends RegularWindowController
       return;
     }
     _destroyWindow(getWindowHandle());
-    ;
     _destroyed = true;
     _delegate.onWindowDestroyed();
     _owner.removeMessageHandler(this);
@@ -216,7 +215,7 @@ class RegularWindowControllerWin32 extends RegularWindowController
     int wParam,
     int lParam,
   ) {
-    if (view.viewId != rootView.viewId) {
+    if (!isReady || view.viewId != rootView.viewId) {
       return null;
     }
 
