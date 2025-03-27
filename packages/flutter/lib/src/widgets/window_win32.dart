@@ -114,7 +114,6 @@ class RegularWindowControllerWin32 extends RegularWindowController
   }) : _owner = owner,
        _delegate = delegate,
        super.empty() {
-    owner.addMessageHandler(this);
     final Pointer<_WindowCreationRequest> request =
         ffi.calloc<_WindowCreationRequest>()
           ..ref.width = size.width
@@ -129,6 +128,7 @@ class RegularWindowControllerWin32 extends RegularWindowController
       (FlutterView view) => view.viewId == viewId,
     );
     view = flutterView;
+    owner.addMessageHandler(this);
   }
 
   @override
@@ -215,7 +215,7 @@ class RegularWindowControllerWin32 extends RegularWindowController
     int wParam,
     int lParam,
   ) {
-    if (!isReady || view.viewId != rootView.viewId) {
+    if (view.viewId != rootView.viewId) {
       return null;
     }
 
