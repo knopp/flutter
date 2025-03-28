@@ -212,7 +212,7 @@ class WindowPositioner {
   final Set<WindowPositionerConstraintAdjustment> constraintAdjustment;
 
   /// Computes the screen-space rectangle for a child window placed according to
-  /// the this position. [childSize] is the frame size of the child window.
+  /// this [WindowPositioner]. [childSize] is the frame size of the child window.
   /// [anchorRect] is the rectangle relative to which the child window is placed.
   /// [parentRect] is the parent window's rectangle. [outputRect] is the output
   /// display area where the child window will be placed. All sizes and rectangles
@@ -226,14 +226,143 @@ class WindowPositioner {
     Rect defaultResult;
     {
       final Offset result =
-          _constraintTo(parentRect, parentAnchor.anchorPositionFor(anchorRect) + offset) +
+          _constraintTo(
+            parentRect,
+            parentAnchor.anchorPositionFor(anchorRect) + offset,
+          ) +
           childAnchor.offsetFor(childSize);
       defaultResult = result & childSize;
       if (_rectContains(outputRect, defaultResult)) {
         return defaultResult;
       }
     }
-    // TODO: Finish
+
+    if (constraintAdjustment.contains(
+      WindowPositionerConstraintAdjustment.flipX,
+    )) {
+      final Offset result =
+          _constraintTo(
+            parentRect,
+            parentAnchor.flipX().anchorPositionFor(anchorRect) + _flipX(offset),
+          ) +
+          childAnchor.flipX().offsetFor(childSize);
+      if (_rectContains(outputRect, result & childSize)) {
+        return result & childSize;
+      }
+    }
+
+    if (constraintAdjustment.contains(
+      WindowPositionerConstraintAdjustment.flipY,
+    )) {
+      final Offset result =
+          _constraintTo(
+            parentRect,
+            parentAnchor.flipY().anchorPositionFor(anchorRect) + _flipY(offset),
+          ) +
+          childAnchor.flipY().offsetFor(childSize);
+      if (_rectContains(outputRect, result & childSize)) {
+        return result & childSize;
+      }
+    }
+
+    if (constraintAdjustment.containsAll({
+      WindowPositionerConstraintAdjustment.flipX,
+      WindowPositionerConstraintAdjustment.flipY,
+    })) {
+      final Offset result =
+          _constraintTo(
+            parentRect,
+            parentAnchor.flipY().flipX().anchorPositionFor(anchorRect) +
+                _flipX(_flipY(offset)),
+          ) +
+          childAnchor.flipY().flipX().offsetFor(childSize);
+      if (_rectContains(outputRect, result & childSize)) {
+        return result & childSize;
+      }
+    }
+
+    {
+      Offset result =
+          _constraintTo(
+            parentRect,
+            parentAnchor.anchorPositionFor(anchorRect) + offset,
+          ) +
+          childAnchor.offsetFor(childSize);
+
+      if (constraintAdjustment.contains(
+        WindowPositionerConstraintAdjustment.slideX,
+      )) {
+        final double leftOverhang = result.dx - outputRect.left;
+        final double rightOverhang =
+            result.dx + childSize.width - outputRect.right;
+        if (leftOverhang < 0.0) {
+          result = result.translate(-leftOverhang, 0.0);
+        } else if (rightOverhang > 0.0) {
+          result = result.translate(-rightOverhang, 0.0);
+        }
+      }
+
+      if (constraintAdjustment.contains(
+        WindowPositionerConstraintAdjustment.slideY,
+      )) {
+        final double topOverhang = result.dy - outputRect.top;
+        final double bottomOverhang =
+            result.dy + childSize.height - outputRect.bottom;
+        if (topOverhang < 0.0) {
+          result = result.translate(0.0, -topOverhang);
+        } else if (bottomOverhang > 0.0) {
+          result = result.translate(0.0, -bottomOverhang);
+        }
+      }
+
+      if (_rectContains(outputRect, result & childSize)) {
+        return result & childSize;
+      }
+    }
+
+    {
+      Offset result =
+          _constraintTo(
+            parentRect,
+            parentAnchor.anchorPositionFor(anchorRect) + offset,
+          ) +
+          childAnchor.offsetFor(childSize);
+
+      if (constraintAdjustment.contains(
+        WindowPositionerConstraintAdjustment.resizeX,
+      )) {
+        final double leftOverhang = result.dx - outputRect.left;
+        final double rightOverhang =
+            result.dx + childSize.width - outputRect.right;
+        if (leftOverhang < 0.0) {
+          result = result.translate(-leftOverhang, 0.0);
+          childSize = Size(childSize.width + leftOverhang, childSize.height);
+        }
+        if (rightOverhang > 0.0) {
+          childSize = Size(childSize.width - rightOverhang, childSize.height);
+        }
+      }
+
+      if (constraintAdjustment.contains(
+        WindowPositionerConstraintAdjustment.resizeY,
+      )) {
+        final double topOverhang = result.dy - outputRect.top;
+        final double bottomOverhang =
+            result.dy + childSize.height - outputRect.bottom;
+        if (topOverhang < 0.0) {
+          result = result.translate(0.0, -topOverhang);
+          childSize = Size(childSize.width, childSize.height + topOverhang);
+        }
+        if (bottomOverhang > 0.0) {
+          childSize = Size(childSize.width, childSize.height - bottomOverhang);
+        }
+      }
+
+      if (_rectContains(outputRect, result & childSize)) {
+        return result & childSize;
+      }
+    }
+
     return defaultResult;
   }
 }
@@ -325,7 +454,10 @@ extension on WindowPositionerAnchor {
 }
 
 bool _rectContains(Rect r1, Rect r2) {
-  return r1.left <= r2.left && r1.right >= r2.right && r1.top <= r2.top && r1.bottom >= r2.bottom;
+  return r1.left <= r2.left &&
+      r1.right >= r2.right &&
+      r1.top <= r2.top &&
+      r1.bottom >= r2.bottom;
 }
 
 Offset _constraintTo(Rect r, Offset p) {
