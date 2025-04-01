@@ -114,7 +114,6 @@ class RegularWindowControllerWin32 extends RegularWindowController
   }) : _owner = owner,
        _delegate = delegate,
        super.empty() {
-    owner.addMessageHandler(this);
     final Pointer<_WindowCreationRequest> request =
         ffi.calloc<_WindowCreationRequest>()
           ..ref.width = size.width
@@ -128,7 +127,8 @@ class RegularWindowControllerWin32 extends RegularWindowController
     final FlutterView flutterView = WidgetsBinding.instance.platformDispatcher.views.firstWhere(
       (FlutterView view) => view.viewId == viewId,
     );
-    setView(flutterView);
+    view = flutterView;
+    owner.addMessageHandler(this);
   }
 
   @override
@@ -199,7 +199,6 @@ class RegularWindowControllerWin32 extends RegularWindowController
       return;
     }
     _destroyWindow(getWindowHandle());
-    ;
     _destroyed = true;
     _delegate.onWindowDestroyed();
     _owner.removeMessageHandler(this);

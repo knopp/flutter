@@ -56,8 +56,7 @@ enum WindowState {
 abstract class WindowController with ChangeNotifier {
   @protected
   /// Sets the view associated with this window.
-  // ignore: use_setters_to_change_properties
-  void setView(FlutterView view) {
+  set view(FlutterView view) {
     _view = view;
   }
 

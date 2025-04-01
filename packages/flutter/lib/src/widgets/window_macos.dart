@@ -73,7 +73,7 @@ class PopupWindowControllerMacOS extends PopupWindowController {
     final FlutterView flutterView = WidgetsBinding.instance.platformDispatcher.views.firstWhere(
       (FlutterView view) => view.viewId == viewId,
     );
-    setView(flutterView);
+    view = flutterView;
     // This calculates absolute position using the [WindowPositioner]. On Linux it would instead convert
     // the positioner xdg_positioner and pass it to the window manager.
     _positionWindow(parentWindow, position, anchorRect);
@@ -164,7 +164,7 @@ class RegularWindowControllerMacOS extends RegularWindowController {
     final FlutterView flutterView = WidgetsBinding.instance.platformDispatcher.views.firstWhere(
       (FlutterView view) => view.viewId == viewId,
     );
-    setView(flutterView);
+    view = flutterView;
     if (title != null) {
       setTitle(title);
     }

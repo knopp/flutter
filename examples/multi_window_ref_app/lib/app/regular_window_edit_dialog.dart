@@ -74,7 +74,10 @@ void showRegularWindowEditDialog(BuildContext context,
               String? title =
                   titleController.text.isEmpty ? null : titleController.text;
 
-              onSave?.call(width, height, title, selectedState);
+              onSave?.call(width, height, title, WindowState.restored);
+              if (selectedState != WindowState.restored) {
+                onSave?.call(null, null, title, selectedState);
+              }
               Navigator.of(context).pop();
             },
             child: Text("Save"),
