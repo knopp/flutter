@@ -226,10 +226,7 @@ class WindowPositioner {
     Rect defaultResult;
     {
       final Offset result =
-          _constraintTo(
-            parentRect,
-            parentAnchor.anchorPositionFor(anchorRect) + offset,
-          ) +
+          _constraintTo(parentRect, parentAnchor.anchorPositionFor(anchorRect) + offset) +
           childAnchor.offsetFor(childSize);
       defaultResult = result & childSize;
       if (_rectContains(outputRect, defaultResult)) {
@@ -237,9 +234,7 @@ class WindowPositioner {
       }
     }
 
-    if (constraintAdjustment.contains(
-      WindowPositionerConstraintAdjustment.flipX,
-    )) {
+    if (constraintAdjustment.contains(WindowPositionerConstraintAdjustment.flipX)) {
       final Offset result =
           _constraintTo(
             parentRect,
@@ -251,9 +246,7 @@ class WindowPositioner {
       }
     }
 
-    if (constraintAdjustment.contains(
-      WindowPositionerConstraintAdjustment.flipY,
-    )) {
+    if (constraintAdjustment.contains(WindowPositionerConstraintAdjustment.flipY)) {
       final Offset result =
           _constraintTo(
             parentRect,
@@ -265,15 +258,14 @@ class WindowPositioner {
       }
     }
 
-    if (constraintAdjustment.containsAll({
+    if (constraintAdjustment.containsAll(<WindowPositionerConstraintAdjustment>{
       WindowPositionerConstraintAdjustment.flipX,
       WindowPositionerConstraintAdjustment.flipY,
     })) {
       final Offset result =
           _constraintTo(
             parentRect,
-            parentAnchor.flipY().flipX().anchorPositionFor(anchorRect) +
-                _flipX(_flipY(offset)),
+            parentAnchor.flipY().flipX().anchorPositionFor(anchorRect) + _flipX(_flipY(offset)),
           ) +
           childAnchor.flipY().flipX().offsetFor(childSize);
       if (_rectContains(outputRect, result & childSize)) {
@@ -283,18 +275,12 @@ class WindowPositioner {
 
     {
       Offset result =
-          _constraintTo(
-            parentRect,
-            parentAnchor.anchorPositionFor(anchorRect) + offset,
-          ) +
+          _constraintTo(parentRect, parentAnchor.anchorPositionFor(anchorRect) + offset) +
           childAnchor.offsetFor(childSize);
 
-      if (constraintAdjustment.contains(
-        WindowPositionerConstraintAdjustment.slideX,
-      )) {
+      if (constraintAdjustment.contains(WindowPositionerConstraintAdjustment.slideX)) {
         final double leftOverhang = result.dx - outputRect.left;
-        final double rightOverhang =
-            result.dx + childSize.width - outputRect.right;
+        final double rightOverhang = result.dx + childSize.width - outputRect.right;
         if (leftOverhang < 0.0) {
           result = result.translate(-leftOverhang, 0.0);
         } else if (rightOverhang > 0.0) {
@@ -302,12 +288,9 @@ class WindowPositioner {
         }
       }
 
-      if (constraintAdjustment.contains(
-        WindowPositionerConstraintAdjustment.slideY,
-      )) {
+      if (constraintAdjustment.contains(WindowPositionerConstraintAdjustment.slideY)) {
         final double topOverhang = result.dy - outputRect.top;
-        final double bottomOverhang =
-            result.dy + childSize.height - outputRect.bottom;
+        final double bottomOverhang = result.dy + childSize.height - outputRect.bottom;
         if (topOverhang < 0.0) {
           result = result.translate(0.0, -topOverhang);
         } else if (bottomOverhang > 0.0) {
@@ -322,18 +305,12 @@ class WindowPositioner {
 
     {
       Offset result =
-          _constraintTo(
-            parentRect,
-            parentAnchor.anchorPositionFor(anchorRect) + offset,
-          ) +
+          _constraintTo(parentRect, parentAnchor.anchorPositionFor(anchorRect) + offset) +
           childAnchor.offsetFor(childSize);
 
-      if (constraintAdjustment.contains(
-        WindowPositionerConstraintAdjustment.resizeX,
-      )) {
+      if (constraintAdjustment.contains(WindowPositionerConstraintAdjustment.resizeX)) {
         final double leftOverhang = result.dx - outputRect.left;
-        final double rightOverhang =
-            result.dx + childSize.width - outputRect.right;
+        final double rightOverhang = result.dx + childSize.width - outputRect.right;
         if (leftOverhang < 0.0) {
           result = result.translate(-leftOverhang, 0.0);
           childSize = Size(childSize.width + leftOverhang, childSize.height);
@@ -343,12 +320,9 @@ class WindowPositioner {
         }
       }
 
-      if (constraintAdjustment.contains(
-        WindowPositionerConstraintAdjustment.resizeY,
-      )) {
+      if (constraintAdjustment.contains(WindowPositionerConstraintAdjustment.resizeY)) {
         final double topOverhang = result.dy - outputRect.top;
-        final double bottomOverhang =
-            result.dy + childSize.height - outputRect.bottom;
+        final double bottomOverhang = result.dy + childSize.height - outputRect.bottom;
         if (topOverhang < 0.0) {
           result = result.translate(0.0, -topOverhang);
           childSize = Size(childSize.width, childSize.height + topOverhang);
@@ -370,60 +344,68 @@ class WindowPositioner {
 extension on WindowPositionerAnchor {
   WindowPositionerAnchor flipX() {
     switch (this) {
-      case WindowPositionerAnchor.topLeft:
-        return WindowPositionerAnchor.topRight;
-      case WindowPositionerAnchor.topRight:
-        return WindowPositionerAnchor.topLeft;
+      case WindowPositionerAnchor.center:
+        return WindowPositionerAnchor.center;
+      case WindowPositionerAnchor.top:
+        return WindowPositionerAnchor.top;
+      case WindowPositionerAnchor.bottom:
+        return WindowPositionerAnchor.bottom;
       case WindowPositionerAnchor.left:
         return WindowPositionerAnchor.right;
       case WindowPositionerAnchor.right:
         return WindowPositionerAnchor.left;
+      case WindowPositionerAnchor.topLeft:
+        return WindowPositionerAnchor.topRight;
       case WindowPositionerAnchor.bottomLeft:
         return WindowPositionerAnchor.bottomRight;
+      case WindowPositionerAnchor.topRight:
+        return WindowPositionerAnchor.topLeft;
       case WindowPositionerAnchor.bottomRight:
         return WindowPositionerAnchor.bottomLeft;
-      default:
-        return this;
     }
   }
 
   WindowPositionerAnchor flipY() {
     switch (this) {
-      case WindowPositionerAnchor.topLeft:
-        return WindowPositionerAnchor.bottomLeft;
+      case WindowPositionerAnchor.center:
+        return WindowPositionerAnchor.center;
       case WindowPositionerAnchor.top:
         return WindowPositionerAnchor.bottom;
-      case WindowPositionerAnchor.topRight:
-        return WindowPositionerAnchor.bottomRight;
-      case WindowPositionerAnchor.bottomLeft:
-        return WindowPositionerAnchor.topLeft;
       case WindowPositionerAnchor.bottom:
         return WindowPositionerAnchor.top;
+      case WindowPositionerAnchor.left:
+        return WindowPositionerAnchor.left;
+      case WindowPositionerAnchor.right:
+        return WindowPositionerAnchor.right;
+      case WindowPositionerAnchor.topLeft:
+        return WindowPositionerAnchor.bottomLeft;
+      case WindowPositionerAnchor.bottomLeft:
+        return WindowPositionerAnchor.topLeft;
+      case WindowPositionerAnchor.topRight:
+        return WindowPositionerAnchor.bottomRight;
       case WindowPositionerAnchor.bottomRight:
         return WindowPositionerAnchor.topRight;
-      default:
-        return this;
     }
   }
 
   Offset offsetFor(Size size) {
     switch (this) {
-      case WindowPositionerAnchor.topLeft:
-        return Offset.zero;
-      case WindowPositionerAnchor.top:
-        return Offset(-size.width / 2.0, 0.0);
-      case WindowPositionerAnchor.topRight:
-        return Offset(-size.width, 0.0);
-      case WindowPositionerAnchor.left:
-        return Offset(0.0, -size.height / 2.0);
       case WindowPositionerAnchor.center:
         return Offset(-size.width / 2.0, -size.height / 2.0);
-      case WindowPositionerAnchor.right:
-        return Offset(-1.0 * size.width, -size.height / 2.0);
-      case WindowPositionerAnchor.bottomLeft:
-        return Offset(0.0, -1.0 * size.height);
+      case WindowPositionerAnchor.top:
+        return Offset(-size.width / 2.0, 0.0);
       case WindowPositionerAnchor.bottom:
         return Offset(-size.width / 2.0, -1.0 * size.height);
+      case WindowPositionerAnchor.left:
+        return Offset(0.0, -size.height / 2.0);
+      case WindowPositionerAnchor.right:
+        return Offset(-1.0 * size.width, -size.height / 2.0);
+      case WindowPositionerAnchor.topLeft:
+        return Offset.zero;
+      case WindowPositionerAnchor.bottomLeft:
+        return Offset(0.0, -1.0 * size.height);
+      case WindowPositionerAnchor.topRight:
+        return Offset(-size.width, 0.0);
       case WindowPositionerAnchor.bottomRight:
         return Offset(-1.0 * size.width, -1.0 * size.height);
     }
@@ -431,22 +413,22 @@ extension on WindowPositionerAnchor {
 
   Offset anchorPositionFor(Rect rect) {
     switch (this) {
-      case WindowPositionerAnchor.topLeft:
-        return rect.topLeft;
-      case WindowPositionerAnchor.top:
-        return rect.topCenter;
-      case WindowPositionerAnchor.topRight:
-        return rect.topRight;
-      case WindowPositionerAnchor.left:
-        return rect.centerLeft;
       case WindowPositionerAnchor.center:
         return rect.center;
-      case WindowPositionerAnchor.right:
-        return rect.centerRight;
-      case WindowPositionerAnchor.bottomLeft:
-        return rect.bottomLeft;
+      case WindowPositionerAnchor.top:
+        return rect.topCenter;
       case WindowPositionerAnchor.bottom:
         return rect.bottomCenter;
+      case WindowPositionerAnchor.left:
+        return rect.centerLeft;
+      case WindowPositionerAnchor.right:
+        return rect.centerRight;
+      case WindowPositionerAnchor.topLeft:
+        return rect.topLeft;
+      case WindowPositionerAnchor.bottomLeft:
+        return rect.bottomLeft;
+      case WindowPositionerAnchor.topRight:
+        return rect.topRight;
       case WindowPositionerAnchor.bottomRight:
         return rect.bottomRight;
     }
@@ -454,10 +436,7 @@ extension on WindowPositionerAnchor {
 }
 
 bool _rectContains(Rect r1, Rect r2) {
-  return r1.left <= r2.left &&
-      r1.right >= r2.right &&
-      r1.top <= r2.top &&
-      r1.bottom >= r2.bottom;
+  return r1.left <= r2.left && r1.right >= r2.right && r1.top <= r2.top && r1.bottom >= r2.bottom;
 }
 
 Offset _constraintTo(Rect r, Offset p) {
