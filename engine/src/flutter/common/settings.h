@@ -376,10 +376,6 @@ struct Settings {
 
   MergedPlatformUIThread merged_platform_ui_thread =
       MergedPlatformUIThread::kEnabled;
-
-  // Enable support for multiple windows. Ignored if not supported on the
-  // platform.
-  bool enable_windowing = false;
 };
 
 }  // namespace flutter
