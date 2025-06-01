@@ -156,7 +156,7 @@ TEST_F(FlutterWindowControllerTest, FlutterGetWindowHandle) {
   EXPECT_EQ(window_handle, (__bridge void*)viewController.view.window);
 }
 
-TEST_F(FlutterWindowControllerTest, FlutterSetWindowState) {
+TEST_F(FlutterWindowControllerTest, WindowStates) {
   FlutterWindowCreationRequest request{
       .contentSize = {.has_size = true, .width = 800, .height = 600},
       .on_close = [] {},
