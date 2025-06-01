@@ -127,19 +127,6 @@ class RegularWindowControllerWin32 extends RegularWindowController
   }
 
   @override
-  WindowState get state {
-    _ensureNotDestroyed();
-    final int state = _getWindowState(getWindowHandle());
-    return WindowState.values[state];
-  }
-
-  @override
-  void setState(WindowState state) {
-    _ensureNotDestroyed();
-    _setWindowState(getWindowHandle(), state.index);
-  }
-
-  @override
   void setTitle(String title) {
     _ensureNotDestroyed();
     final Pointer<ffi.Utf16> titlePointer = title.toNativeUtf16();
@@ -233,6 +220,39 @@ class RegularWindowControllerWin32 extends RegularWindowController
 
   @Native<Void Function(Pointer<Void>, Pointer<_Sizing>)>(symbol: 'FlutterSetWindowContentSize')
   external static void _setWindowContentSize(Pointer<Void> windowHandle, Pointer<_Sizing> size);
+
+  @override
+  bool isFullscreen() {
+    // TODO: implement isFullscreen
+    throw UnimplementedError();
+  }
+
+  @override
+  bool isMaximized() {
+    // TODO: implement isMaximized
+    throw UnimplementedError();
+  }
+
+  @override
+  bool isMinimized() {
+    // TODO: implement isMinimized
+    throw UnimplementedError();
+  }
+
+  @override
+  void minimize() {
+    // TODO: implement minimize
+  }
+
+  @override
+  void setFullscreen(bool fullscreen, {int? displayId}) {
+    // TODO: implement setFullscreen
+  }
+
+  @override
+  void setMaximized(bool maximized) {
+    // TODO: implement setMaximized
+  }
 }
 
 /// Request to initialize windowing system.
