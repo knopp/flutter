@@ -4,24 +4,22 @@
 
 import 'package:flutter/material.dart';
 
-void showRegularWindowEditDialog(BuildContext context,
-    {double? initialWidth,
-    double? initialHeight,
-    String? initialTitle,
-    WindowState? initialState,
-    Function(double?, double?, String?, WindowState)? onSave}) {
+void showRegularWindowEditDialog(
+  BuildContext context, {
+  double? initialWidth,
+  double? initialHeight,
+  String? initialTitle,
+  Function(double?, double?, String?)? onSave,
+}) {
   final TextEditingController widthController =
       TextEditingController(text: initialWidth?.toString() ?? '');
   final TextEditingController heightController =
       TextEditingController(text: initialHeight?.toString() ?? '');
-  final TextEditingController titleController =
-      TextEditingController(text: initialTitle ?? '');
+  final TextEditingController titleController = TextEditingController(text: initialTitle ?? '');
 
   showDialog(
     context: context,
     builder: (context) {
-      WindowState selectedState = initialState ?? WindowState.restored;
-
       return AlertDialog(
         title: Text("Edit Window Properties"),
         content: StatefulBuilder(
@@ -43,25 +41,6 @@ void showRegularWindowEditDialog(BuildContext context,
                   controller: titleController,
                   decoration: InputDecoration(labelText: "Title"),
                 ),
-                DropdownButton<WindowState>(
-                  value: selectedState,
-                  onChanged: (WindowState? newState) {
-                    if (newState != null) {
-                      setState(() {
-                        selectedState = newState;
-                      });
-                    }
-                  },
-                  items: WindowState.values.map((WindowState state) {
-                    return DropdownMenuItem<WindowState>(
-                      value: state,
-                      child: Text(
-                        state.toString().split('.').last[0].toUpperCase() +
-                            state.toString().split('.').last.substring(1),
-                      ),
-                    );
-                  }).toList(),
-                ),
               ],
             );
           },
@@ -75,10 +54,9 @@ void showRegularWindowEditDialog(BuildContext context,
             onPressed: () {
               double? width = double.tryParse(widthController.text);
               double? height = double.tryParse(heightController.text);
-              String? title =
-                  titleController.text.isEmpty ? null : titleController.text;
+              String? title = titleController.text.isEmpty ? null : titleController.text;
 
-              onSave?.call(width, height, title, selectedState);
+              onSave?.call(width, height, title);
               Navigator.of(context).pop();
             },
             child: Text("Save"),

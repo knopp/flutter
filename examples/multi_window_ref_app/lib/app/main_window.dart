@@ -147,7 +147,7 @@ class _ActiveWindowsTable extends StatelessWidget {
                   }
                 },
                 cells: [
-                  DataCell(Text('$controller.controller.rootView.viewId')),
+                  DataCell(Text('${controller.controller.rootView.viewId}')),
                   DataCell(
                     ListenableBuilder(
                         listenable: controller.controller,
@@ -164,28 +164,24 @@ class _ActiveWindowsTable extends StatelessWidget {
                                 icon: const Icon(Icons.edit_outlined),
                                 onPressed: () {
                                   if (controller.controller.type == WindowArchetype.regular) {
-                                    showRegularWindowEditDialog(context,
-                                        initialWidth: controller.controller.contentSize.width,
-                                        initialHeight: controller.controller.contentSize.height,
-                                        initialTitle: "",
-                                        initialState:
-                                            (controller.controller as RegularWindowController)
-                                                .state, onSave: (double? width, double? height,
-                                            String? title, WindowState? state) {
-                                      final regularController =
-                                          controller.controller as RegularWindowController;
-                                      if (width != null && height != null) {
-                                        regularController.updateContentSize(
-                                          WindowSizing(preferredSize: Size(width, height)),
-                                        );
-                                      }
-                                      if (title != null) {
-                                        regularController.setTitle(title);
-                                      }
-                                      if (state != null) {
-                                        regularController.setState(state);
-                                      }
-                                    });
+                                    showRegularWindowEditDialog(
+                                      context,
+                                      initialWidth: controller.controller.contentSize.width,
+                                      initialHeight: controller.controller.contentSize.height,
+                                      initialTitle: "",
+                                      onSave: (double? width, double? height, String? title) {
+                                        final regularController =
+                                            controller.controller as RegularWindowController;
+                                        if (width != null && height != null) {
+                                          regularController.updateContentSize(
+                                            WindowSizing(preferredSize: Size(width, height)),
+                                          );
+                                        }
+                                        if (title != null) {
+                                          regularController.setTitle(title);
+                                        }
+                                      },
+                                    );
                                   }
                                 },
                               ),
