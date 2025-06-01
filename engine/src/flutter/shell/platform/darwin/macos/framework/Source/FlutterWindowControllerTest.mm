@@ -169,21 +169,26 @@ TEST_F(FlutterWindowControllerTest, FlutterSetWindowState) {
   IsolateScope isolate_scope(isolate());
   int64_t handle = FlutterCreateRegularWindow(engine_id, &request);
 
-  const std::array kWindowStates = {
-      static_cast<int64_t>(WindowState::kRestored),   //
-      static_cast<int64_t>(WindowState::kMaximized),  //
-      static_cast<int64_t>(WindowState::kMinimized),  //
-      static_cast<int64_t>(WindowState::kMaximized),  //
-      static_cast<int64_t>(WindowState::kRestored),   //
-  };
   FlutterViewController* viewController = [engine viewControllerForIdentifier:handle];
-  void* windowHandle = (__bridge void*)viewController.view.window;
+  NSWindow* window = viewController.view.window;
+  void* windowHandle = (__bridge void*)window;
 
-  for (const auto requestedState : kWindowStates) {
-    FlutterSetWindowState(windowHandle, requestedState);
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1.0, false);
-    const int64_t actualState = FlutterGetWindowState(windowHandle);
-    EXPECT_EQ(actualState, requestedState);
-  }
+  EXPECT_EQ(window.zoomed, NO);
+  EXPECT_EQ(window.miniaturized, NO);
+  EXPECT_EQ(window.styleMask & NSWindowStyleMaskFullScreen, 0u);
+
+  FlutterWindowSetMaximized(windowHandle, true);
+  CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.5, false);
+  EXPECT_EQ(window.zoomed, YES);
+
+  FlutterWindowSetMaximized(windowHandle, false);
+  CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.5, false);
+  EXPECT_EQ(window.zoomed, NO);
+
+  // FullScreen toggle does not seem to work when the application is not run from a bundle.
+
+  FlutterWindowMinimize(windowHandle);
+  CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.5, false);
+  EXPECT_EQ(window.miniaturized, YES);
 }
 }  // namespace flutter::testing

@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #import "flutter/shell/platform/darwin/macos/framework/Source/FlutterWindowController.h"
+#include <Foundation/Foundation.h>
 
 #import "flutter/shell/platform/darwin/common/framework/Headers/FlutterChannels.h"
 #import "flutter/shell/platform/darwin/common/framework/Headers/FlutterCodecs.h"
@@ -10,7 +11,6 @@
 #import "flutter/shell/platform/darwin/macos/framework/Source/FlutterViewController_Internal.h"
 
 #include "flutter/shell/platform/common/isolate_scope.h"
-#include "flutter/shell/platform/common/windowing.h"
 
 /// A delegate for a Flutter managed window.
 @interface FlutterWindowOwner : NSObject <NSWindowDelegate> {
@@ -200,37 +200,45 @@ void FlutterSetWindowTitle(void* window, const char* title) {
   w.title = [NSString stringWithUTF8String:title];
 }
 
-int64_t FlutterGetWindowState(void* window) {
+void FlutterWindowSetMaximized(void* window, bool maximized) {
   NSWindow* w = (__bridge NSWindow*)window;
-  if (w.isMiniaturized) {
-    return static_cast<int64_t>(flutter::WindowState::kMinimized);
-  } else if (w.isZoomed) {
-    return static_cast<int64_t>(flutter::WindowState::kMaximized);
-  } else {
-    return static_cast<int64_t>(flutter::WindowState::kRestored);
+  if (maximized & !w.isZoomed) {
+    [w zoom:nil];
+  } else if (!maximized && w.isZoomed) {
+    [w zoom:nil];
   }
 }
 
-void FlutterSetWindowState(void* window, int64_t state) {
-  flutter::WindowState windowState = static_cast<flutter::WindowState>(state);
+bool FlutterWindowIsMaximized(void* window) {
   NSWindow* w = (__bridge NSWindow*)window;
-  if (windowState == flutter::WindowState::kMaximized) {
-    [w deminiaturize:nil];
-    [w zoom:nil];
-  } else if (state == static_cast<int64_t>(flutter::WindowState::kMinimized)) {
-    [w miniaturize:nil];
-  } else {
-    if (w.isMiniaturized) {
-      [w deminiaturize:nil];
-    } else if (w.isZoomed) {
-      [w zoom:nil];
-    } else {
-      bool isFullScreen = (w.styleMask & NSWindowStyleMaskFullScreen) != 0;
-      if (isFullScreen) {
-        [w toggleFullScreen:nil];
-      }
-    }
+  return w.isZoomed;
+}
+
+void FlutterWindowMinimize(void* window) {
+  NSWindow* w = (__bridge NSWindow*)window;
+  [w miniaturize:nil];
+}
+
+bool FlutterWindowIsMinimized(void* window) {
+  NSWindow* w = (__bridge NSWindow*)window;
+  return w.isMiniaturized;
+}
+
+void FlutterWindowSetFullScreen(void* window, bool fullScreen) {
+  NSWindow* w = (__bridge NSWindow*)window;
+  bool isFullScreen = (w.styleMask & NSWindowStyleMaskFullScreen) != 0;
+  if (fullScreen && !isFullScreen) {
+    NSLog(@"Toggle");
+    [w toggleFullScreen:nil];
+  } else if (!fullScreen && isFullScreen) {
+    NSLog(@"Toggle");
+    [w toggleFullScreen:nil];
   }
+}
+
+bool FlutterWindowIsFullScreen(void* window) {
+  NSWindow* w = (__bridge NSWindow*)window;
+  return (w.styleMask & NSWindowStyleMaskFullScreen) != 0;
 }
 
 // NOLINTEND(google-objc-function-naming)
