@@ -138,6 +138,11 @@ class RegularWindowControllerMacOS extends RegularWindowController {
   }
 
   @override
+  void activate() {
+    // TODO: Implement
+  }
+
+  @override
   void setMaximized(bool maximized) {
     _ensureNotDestroyed();
     _setMaximized(getWindowHandle(), maximized);
@@ -150,9 +155,13 @@ class RegularWindowControllerMacOS extends RegularWindowController {
   }
 
   @override
-  void minimize() {
+  void setMinimized(bool minimized) {
     _ensureNotDestroyed();
-    _minimize(getWindowHandle());
+    if (minimized) {
+      _minimize(getWindowHandle());
+    } else {
+      // TODO: Unminimize
+    }
   }
 
   @override

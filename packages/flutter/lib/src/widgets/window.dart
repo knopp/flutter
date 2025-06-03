@@ -165,7 +165,12 @@ abstract class RegularWindowController extends WindowController {
   /// [title] new title of the window.
   void setTitle(String title);
 
-  /// Requests the window to be maximized. This has not effect
+  /// Requests that the window be displayed in its current size and position.
+  /// If the window is minimized or maximized, the window returns to the size
+  /// and position that it had before that state was applied.
+  void activate();
+
+  /// Requests the window to be maximized. This has no effect
   /// if the window is currently full screen or minimized, but may
   /// affect the window size upon restoring it from minimized or
   /// full screen state.
@@ -175,7 +180,7 @@ abstract class RegularWindowController extends WindowController {
   bool isMaximized();
 
   /// Requests window to be minimized.
-  void minimize();
+  void setMinimized(bool minimized);
 
   /// Returns whether window is currently minimized.
   bool isMinimized();

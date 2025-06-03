@@ -144,14 +144,18 @@ class RegularWindowControllerWin32 extends RegularWindowController
   }
 
   @override
+  void activate() {
+    _ensureNotDestroyed();
+    _showWindow(getWindowHandle(), SW_RESTORE);
+  }
+
+  @override
   bool isFullscreen() {
     return false;
   }
 
-   @override
-  void setFullscreen(bool fullscreen, {int? displayId}) {
-
-  }
+  @override
+  void setFullscreen(bool fullscreen, {int? displayId}) {}
 
   @override
   bool isMaximized() {
@@ -166,9 +170,13 @@ class RegularWindowControllerWin32 extends RegularWindowController
   }
 
   @override
-  void minimize() {
+  void setMinimized(bool minimized) {
     _ensureNotDestroyed();
-    _showWindow(getWindowHandle(), SW_MINIMIZE);
+    if (minimized) {
+      _showWindow(getWindowHandle(), SW_MINIMIZE);
+    } else {
+      _showWindow(getWindowHandle(), SW_RESTORE);
+    }
   }
 
   @override
