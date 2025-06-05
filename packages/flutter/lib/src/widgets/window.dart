@@ -167,7 +167,8 @@ abstract class RegularWindowController extends WindowController {
 
   /// Requests that the window be displayed in its current size and position.
   /// If the window is minimized or maximized, the window returns to the size
-  /// and position that it had before that state was applied.
+  /// and position that it had before that state was applied. After activation,
+  /// the window is focused, meaning that it is brought to the foreground.
   void activate();
 
   /// Requests the window to be maximized. This has no effect

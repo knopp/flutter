@@ -147,6 +147,7 @@ class RegularWindowControllerWin32 extends RegularWindowController
   void activate() {
     _ensureNotDestroyed();
     _showWindow(getWindowHandle(), SW_RESTORE);
+    _setForegroundWindow(getWindowHandle());
   }
 
   @override
@@ -267,6 +268,9 @@ class RegularWindowControllerWin32 extends RegularWindowController
 
   @Native<Void Function(Pointer<Void>, Int32)>(symbol: 'ShowWindow')
   external static void _showWindow(Pointer<Void> windowHandle, int command);
+
+  @Native<Void Function(Pointer<Void>)>(symbol: 'SetForegroundWindow')
+  external static void _setForegroundWindow(Pointer<Void> windowHandle);
 
   @Native<Int32 Function(Pointer<Void>)>(symbol: 'IsIconic')
   external static int _isIconic(Pointer<Void> windowHandle);
