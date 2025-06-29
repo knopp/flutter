@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'dialog_window_content.dart';
 import 'regular_window_content.dart';
+import 'tooltip_window_content.dart';
 import 'window_manager_model.dart';
 import 'window_settings.dart';
 
@@ -55,6 +56,14 @@ class WindowControllerRender extends StatelessWidget {
           key: key,
           controller: dialogController,
           child: child,
+        );
+      case WindowArchetype.tooltip:
+        return TooltipWindow(
+          key: key,
+          controller: controller as TooltipWindowController,
+          child: TooltipWindowContent(
+            controller: controller as TooltipWindowController,
+          ),
         );
     }
   }

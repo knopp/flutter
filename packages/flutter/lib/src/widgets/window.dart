@@ -12,6 +12,7 @@ import '_window_ffi.dart' if (dart.library.js_util) '_window_web.dart' as window
 import 'binding.dart';
 import 'framework.dart';
 import 'view.dart';
+import 'window_positioner.dart';
 
 /// Defines the possible archetypes for a window.
 enum WindowArchetype {
@@ -20,6 +21,9 @@ enum WindowArchetype {
 
   /// Defines a dialog window
   dialog,
+
+  /// Defines a tooltip window
+  tooltip,
 }
 
 /// Defines sizing request for a window.
@@ -76,6 +80,45 @@ abstract class WindowController with ChangeNotifier {
   /// The root view associated to this window, which is unique to each window.
   FlutterView get rootView => _view;
   late final FlutterView _view;
+}
+
+abstract class TooltipWindowController extends WindowController {
+  factory TooltipWindowController({
+    required FlutterView parent,
+    required Rect anchorRect,
+    required WindowPositioner positioner,
+    BoxConstraints? contentSizeConstraints,
+    TooltipWindowControllerDelegate? delegate,
+  }) {
+    WidgetsFlutterBinding.ensureInitialized();
+    final WindowingOwner owner = WidgetsBinding.instance.windowingOwner;
+    final TooltipWindowController controller = owner.createTooltipWindowController(
+      parent: parent,
+      contentSizeConstraints: contentSizeConstraints ?? const BoxConstraints(),
+      delegate: delegate ?? TooltipWindowControllerDelegate(),
+      anchorRect: anchorRect,
+      positioner: positioner,
+    );
+    return controller;
+  }
+
+  @protected
+  /// Creates an empty [TooltipWindowController].
+  TooltipWindowController.empty();
+
+  @override
+  WindowArchetype get type => WindowArchetype.tooltip;
+}
+
+mixin class TooltipWindowControllerDelegate {
+  /// Invoked when user attempts to close the window. Default implementation
+  /// destroys the window. Subclass can override the behavior to delay
+  /// or prevent the window from closing.
+  void onWindowCloseRequested(TooltipWindowController controller) {
+    controller.destroy();
+  }
+
+  void onWindowDestroyed() {}
 }
 
 /// Delegate class for regular window controller.
@@ -316,6 +359,15 @@ abstract class WindowingOwner {
     FlutterView? parent,
   });
 
+  /// Creates a [TooltipWindowController] with the provided properties.
+  TooltipWindowController createTooltipWindowController({
+    required BoxConstraints contentSizeConstraints,
+    required Rect anchorRect,
+    required WindowPositioner positioner,
+    required TooltipWindowControllerDelegate delegate,
+    required FlutterView parent,
+  });
+
   /// Returns whether application has any top level windows created by this
   /// windowing owner.
   bool hasTopLevelWindows();
@@ -344,6 +396,20 @@ class _FallbackWindowingOwner extends WindowingOwner {
     required WindowSizing contentSize,
     required DialogWindowControllerDelegate delegate,
     FlutterView? parent,
+  }) {
+    throw UnsupportedError(
+      'Current platform does not support windowing.\n'
+      'Implement a WindowingDelegate for this platform.',
+    );
+  }
+
+  @override
+  TooltipWindowController createTooltipWindowController({
+    required BoxConstraints contentSizeConstraints,
+    required TooltipWindowControllerDelegate delegate,
+    required FlutterView parent,
+    required Rect anchorRect,
+    required WindowPositioner positioner,
   }) {
     throw UnsupportedError(
       'Current platform does not support windowing.\n'
@@ -448,6 +514,52 @@ class DialogWindow extends StatefulWidget {
 }
 
 class _DialogWindowState extends State<DialogWindow> {
+  @override
+  void dispose() {
+    super.dispose();
+    widget.controller.destroy();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return View(
+      view: widget.controller.rootView,
+      child: WindowControllerContext(controller: widget.controller, child: widget.child),
+    );
+  }
+}
+
+/// The [TooltipWindow] widget provides a way to render a tooltip window in the
+/// widget tree. The provided [controller] creates the native window that backs
+/// the widget. The [child] widget is rendered into this newly created window.
+///
+/// While the window is being created, the [TooltipWindow] widget will render
+/// an empty [ViewCollection] widget. Once the window is created, the [child]
+/// widget will be rendered into the window inside of a [View].
+///
+/// When a [TooltipWindow] widget is removed from the tree, the window that was created
+/// by the [controller] is automatically destroyed if it has not yet been destroyed.
+///
+/// Widgets in the same tree as the [child] widget will have access to the
+/// [TooltipWindowController] via the [WindowControllerContext] widget.
+class TooltipWindow extends StatefulWidget {
+  /// Creates a dialog window widget.
+  /// [controller] the controller for this window
+  /// [child] the content to render into this window
+  /// [key] the key for this widget
+  const TooltipWindow({super.key, required this.controller, required this.child});
+
+  /// Controller for this widget.
+  final TooltipWindowController controller;
+
+  /// The content rendered into this window.
+  final Widget child;
+
+  @override
+  State<TooltipWindow> createState() => _TooltipWindowState();
+}
+
+class _TooltipWindowState extends State<TooltipWindow> {
   @override
   void dispose() {
     super.dispose();

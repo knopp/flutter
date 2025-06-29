@@ -35,20 +35,48 @@ struct FlutterWindowSizing {
   double max_height;
 };
 
-struct FlutterWindowCreationRequest {
-  FlutterWindowSizing contentSize;
-  int64_t parent_id;
-  void (*on_close)();
-  void (*on_size_change)();
-};
-
 struct FlutterWindowSize {
   double width;
   double height;
+
+  static FlutterWindowSize fromNSSize(const NSSize& size) {
+    return {
+        size.width,
+        size.height,
+    };
+  }
+};
+
+struct FlutterWindowRect {
+  double left;
+  double top;
+  double width;
+  double height;
+
+  static FlutterWindowRect fromNSRect(const NSRect& rect) {
+    return {
+        rect.origin.x,
+        rect.origin.y,
+        rect.size.width,
+        rect.size.height,
+    };
+  }
+
+  NSRect toNSRect() const { return NSMakeRect(left, top, width, height); }
+};
+
+struct FlutterWindowCreationRequest {
+  FlutterWindowSizing contentSize;
+  int64_t parent_id;
+  void (*on_should_close)();
+  void (*on_will_close)();
+  void (*on_size_change)();
+  FlutterWindowRect* (*on_get_window_position)(const FlutterWindowSize& child_size,
+                                               const FlutterWindowRect& parent_rect,
+                                               const FlutterWindowRect& output_rect);
 };
 
 extern "C" {
-
 // NOLINTBEGIN(google-objc-function-naming)
 
 FLUTTER_DARWIN_EXPORT
@@ -56,6 +84,9 @@ int64_t FlutterCreateRegularWindow(int64_t engine_id, const FlutterWindowCreatio
 
 FLUTTER_DARWIN_EXPORT
 int64_t FlutterCreateDialogWindow(int64_t engine_id, const FlutterWindowCreationRequest* request);
+
+FLUTTER_DARWIN_EXPORT
+int64_t FlutterCreateTooltipWindow(int64_t engine_id, const FlutterWindowCreationRequest* request);
 
 FLUTTER_DARWIN_EXPORT
 void FlutterDestroyWindow(int64_t engine_id, void* window);

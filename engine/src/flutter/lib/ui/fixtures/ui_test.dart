@@ -371,10 +371,9 @@ external void validateConfiguration();
 Future<void> encodeImageProducesExternalUint8List() async {
   final PictureRecorder pictureRecorder = PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
-  final Paint paint =
-      Paint()
-        ..color = Color.fromRGBO(255, 255, 255, 1.0)
-        ..style = PaintingStyle.fill;
+  final Paint paint = Paint()
+    ..color = Color.fromRGBO(255, 255, 255, 1.0)
+    ..style = PaintingStyle.fill;
   final Offset c = Offset(50.0, 50.0);
   canvas.drawCircle(c, 25.0, paint);
   final Picture picture = pictureRecorder.endRecording();
@@ -404,10 +403,9 @@ external void _validateNotNull(Object? object);
 Future<void> toByteDataWithoutGPU() async {
   final PictureRecorder pictureRecorder = PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
-  final Paint paint =
-      Paint()
-        ..color = Color.fromRGBO(255, 255, 255, 1.0)
-        ..style = PaintingStyle.fill;
+  final Paint paint = Paint()
+    ..color = Color.fromRGBO(255, 255, 255, 1.0)
+    ..style = PaintingStyle.fill;
   final Offset c = Offset(50.0, 50.0);
   canvas.drawCircle(c, 25.0, paint);
   final Picture picture = pictureRecorder.endRecording();
@@ -430,10 +428,9 @@ Future<void> toByteDataWithoutGPU() async {
 Future<void> toByteDataRetries() async {
   final PictureRecorder pictureRecorder = PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
-  final Paint paint =
-      Paint()
-        ..color = Color.fromRGBO(255, 255, 255, 1.0)
-        ..style = PaintingStyle.fill;
+  final Paint paint = Paint()
+    ..color = Color.fromRGBO(255, 255, 255, 1.0)
+    ..style = PaintingStyle.fill;
   final Offset c = Offset(50.0, 50.0);
   canvas.drawCircle(c, 25.0, paint);
   final Picture picture = pictureRecorder.endRecording();
@@ -454,10 +451,9 @@ Future<void> toByteDataRetries() async {
 Future<void> toByteDataRetryOverflows() async {
   final PictureRecorder pictureRecorder = PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
-  final Paint paint =
-      Paint()
-        ..color = Color.fromRGBO(255, 255, 255, 1.0)
-        ..style = PaintingStyle.fill;
+  final Paint paint = Paint()
+    ..color = Color.fromRGBO(255, 255, 255, 1.0)
+    ..style = PaintingStyle.fill;
   final Offset c = Offset(50.0, 50.0);
   canvas.drawCircle(c, 25.0, paint);
   final Picture picture = pictureRecorder.endRecording();
@@ -494,10 +490,9 @@ Future<void> toByteDataRetryOverflows() async {
 Future<void> toImageRetries() async {
   final PictureRecorder pictureRecorder = PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
-  final Paint paint =
-      Paint()
-        ..color = Color.fromRGBO(255, 255, 255, 1.0)
-        ..style = PaintingStyle.fill;
+  final Paint paint = Paint()
+    ..color = Color.fromRGBO(255, 255, 255, 1.0)
+    ..style = PaintingStyle.fill;
   final Offset c = Offset(50.0, 50.0);
   canvas.drawCircle(c, 25.0, paint);
   final Picture picture = pictureRecorder.endRecording();
@@ -517,10 +512,9 @@ Future<void> toImageRetries() async {
 Future<void> toImageRetryOverflows() async {
   final PictureRecorder pictureRecorder = PictureRecorder();
   final Canvas canvas = Canvas(pictureRecorder);
-  final Paint paint =
-      Paint()
-        ..color = Color.fromRGBO(255, 255, 255, 1.0)
-        ..style = PaintingStyle.fill;
+  final Paint paint = Paint()
+    ..color = Color.fromRGBO(255, 255, 255, 1.0)
+    ..style = PaintingStyle.fill;
   final Offset c = Offset(50.0, 50.0);
   canvas.drawCircle(c, 25.0, paint);
   final Picture picture = pictureRecorder.endRecording();
@@ -680,11 +674,15 @@ void hooksTests() async {
     window.onMetricsChanged!();
     _callHook(
       '_updateWindowMetrics',
-      21,
+      25,
       0, // window Id
       0.1234, // device pixel ratio
       0.0, // width
       0.0, // height
+      0.0, // min width
+      0.0, // min height
+      0.0, // max width
+      0.0, // max_height
       0.0, // padding top
       0.0, // padding right
       0.0, // padding bottom
@@ -794,11 +792,15 @@ void hooksTests() async {
   await test('View padding/insets/viewPadding/systemGestureInsets', () {
     _callHook(
       '_updateWindowMetrics',
-      21,
+      25,
       0, // window Id
       1.0, // devicePixelRatio
       800.0, // width
       600.0, // height
+      0.0, // min width
+      0.0, // min height
+      0.0, // max width
+      0.0, // max_height
       50.0, // paddingTop
       0.0, // paddingRight
       40.0, // paddingBottom
@@ -825,11 +827,15 @@ void hooksTests() async {
 
     _callHook(
       '_updateWindowMetrics',
-      21,
+      25,
       0, // window Id
       1.0, // devicePixelRatio
       800.0, // width
       600.0, // height
+      0.0, // min width
+      0.0, // min height
+      0.0, // max width
+      0.0, // max_height
       50.0, // paddingTop
       0.0, // paddingRight
       40.0, // paddingBottom
@@ -858,11 +864,15 @@ void hooksTests() async {
   await test('Window physical touch slop', () {
     _callHook(
       '_updateWindowMetrics',
-      21,
+      25,
       0, // window Id
       1.0, // devicePixelRatio
       800.0, // width
       600.0, // height
+      0.0, // min width
+      0.0, // min height
+      0.0, // max width
+      0.0, // max_height
       50.0, // paddingTop
       0.0, // paddingRight
       40.0, // paddingBottom
@@ -886,11 +896,15 @@ void hooksTests() async {
 
     _callHook(
       '_updateWindowMetrics',
-      21,
+      25,
       0, // window Id
       1.0, // devicePixelRatio
       800.0, // width
       600.0, // height
+      0.0, // min width
+      0.0, // min height
+      0.0, // max width
+      0.0, // max_height
       50.0, // paddingTop
       0.0, // paddingRight
       40.0, // paddingBottom
@@ -914,11 +928,15 @@ void hooksTests() async {
 
     _callHook(
       '_updateWindowMetrics',
-      21,
+      25,
       0, // window Id
       1.0, // devicePixelRatio
       800.0, // width
       600.0, // height
+      0.0, // min width
+      0.0, // min height
+      0.0, // max width
+      0.0, // max_height
       50.0, // paddingTop
       0.0, // paddingRight
       40.0, // paddingBottom
@@ -1332,4 +1350,8 @@ external void _callHook(
   Object? arg19,
   Object? arg20,
   Object? arg21,
+  Object? arg22,
+  Object? arg23,
+  Object? arg24,
+  Object? arg25,
 ]);

@@ -10,6 +10,10 @@ void _addView(
   double devicePixelRatio,
   double width,
   double height,
+  double minWidth,
+  double minHeight,
+  double maxWidth,
+  double maxHeight,
   double viewPaddingTop,
   double viewPaddingRight,
   double viewPaddingBottom,
@@ -32,6 +36,10 @@ void _addView(
     devicePixelRatio,
     width,
     height,
+    minWidth,
+    minHeight,
+    maxWidth,
+    maxHeight,
     viewPaddingTop,
     viewPaddingRight,
     viewPaddingBottom,
@@ -121,10 +129,9 @@ List<DisplayFeature> _decodeDisplayFeatures({
           bounds[rectOffset + 3] / devicePixelRatio,
         ),
         type: DisplayFeatureType.values[type[i]],
-        state:
-            state[i] < DisplayFeatureState.values.length
-                ? DisplayFeatureState.values[state[i]]
-                : DisplayFeatureState.unknown,
+        state: state[i] < DisplayFeatureState.values.length
+            ? DisplayFeatureState.values[state[i]]
+            : DisplayFeatureState.unknown,
       ),
     );
   }
@@ -135,6 +142,10 @@ _ViewConfiguration _buildViewConfiguration(
   double devicePixelRatio,
   double width,
   double height,
+  double minWidth,
+  double minHeight,
+  double maxWidth,
+  double maxHeight,
   double viewPaddingTop,
   double viewPaddingRight,
   double viewPaddingBottom,
@@ -156,6 +167,8 @@ _ViewConfiguration _buildViewConfiguration(
   return _ViewConfiguration(
     devicePixelRatio: devicePixelRatio,
     size: Size(width, height),
+    minSize: Size(minWidth, minHeight),
+    maxSize: Size(maxWidth, maxHeight),
     viewPadding: ViewPadding._(
       top: viewPaddingTop,
       right: viewPaddingRight,
@@ -199,6 +212,10 @@ void _updateWindowMetrics(
   double devicePixelRatio,
   double width,
   double height,
+  double minWidth,
+  double minHeight,
+  double maxWidth,
+  double maxHeight,
   double viewPaddingTop,
   double viewPaddingRight,
   double viewPaddingBottom,
@@ -221,6 +238,10 @@ void _updateWindowMetrics(
     devicePixelRatio,
     width,
     height,
+    minWidth,
+    minHeight,
+    maxWidth,
+    maxHeight,
     viewPaddingTop,
     viewPaddingRight,
     viewPaddingBottom,

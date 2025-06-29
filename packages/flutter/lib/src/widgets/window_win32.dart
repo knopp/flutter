@@ -10,6 +10,7 @@ import 'package:flutter/rendering.dart';
 
 import 'binding.dart';
 import 'window.dart';
+import 'window_positioner.dart';
 
 typedef HWND = Pointer<Void>;
 
@@ -61,6 +62,17 @@ class WindowingOwnerWin32 extends WindowingOwner {
       contentSize: contentSize,
       parent: parent,
     );
+  }
+
+  @override
+  TooltipWindowController createTooltipWindowController({
+    required FlutterView parent,
+    required BoxConstraints contentSizeConstraints,
+    required TooltipWindowControllerDelegate delegate,
+    required Rect anchorRect,
+    required WindowPositioner positioner,
+  }) {
+    throw UnsupportedError('Current platform does not support popup windows.');
   }
 
   /// Register new message handler. The handler will be called for unhandled
