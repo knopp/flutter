@@ -531,21 +531,19 @@ class PlatformDispatcher {
     return PointerDataPacket(data: data);
   }
 
-  static ChannelCallback _keyDataListener(KeyDataCallback onKeyData, Zone zone) => (
-    ByteData? packet,
-    PlatformMessageResponseCallback callback,
-  ) {
-    _invoke1<KeyData>(
-      (KeyData keyData) {
-        final bool handled = onKeyData(keyData);
-        final Uint8List response = Uint8List(1);
-        response[0] = handled ? 1 : 0;
-        callback(response.buffer.asByteData());
-      },
-      zone,
-      _unpackKeyData(packet!),
-    );
-  };
+  static ChannelCallback _keyDataListener(KeyDataCallback onKeyData, Zone zone) =>
+      (ByteData? packet, PlatformMessageResponseCallback callback) {
+        _invoke1<KeyData>(
+          (KeyData keyData) {
+            final bool handled = onKeyData(keyData);
+            final Uint8List response = Uint8List(1);
+            response[0] = handled ? 1 : 0;
+            callback(response.buffer.asByteData());
+          },
+          zone,
+          _unpackKeyData(packet!),
+        );
+      };
 
   /// A callback that is invoked when key data is available.
   ///
@@ -577,12 +575,11 @@ class PlatformDispatcher {
 
     int offset = 0;
     final int charDataSize = packet.getUint64(kStride * offset++, _kFakeHostEndian);
-    final String? character =
-        charDataSize == 0
-            ? null
-            : utf8.decoder.convert(
-              packet.buffer.asUint8List(kStride * (offset + _kKeyDataFieldCount), charDataSize),
-            );
+    final String? character = charDataSize == 0
+        ? null
+        : utf8.decoder.convert(
+            packet.buffer.asUint8List(kStride * (offset + _kKeyDataFieldCount), charDataSize),
+          );
 
     final KeyData keyData = KeyData(
       timeStamp: Duration(microseconds: packet.getUint64(kStride * offset++, _kFakeHostEndian)),
@@ -1862,6 +1859,8 @@ class _ViewConfiguration {
   const _ViewConfiguration({
     this.devicePixelRatio = 1.0,
     this.size = Size.zero,
+    this.minSize = Size.zero,
+    this.maxSize = Size.zero,
     this.viewInsets = ViewPadding.zero,
     this.viewPadding = ViewPadding.zero,
     this.systemGestureInsets = ViewPadding.zero,
@@ -1880,6 +1879,12 @@ class _ViewConfiguration {
 
   /// The size requested for the view in physical pixels.
   final Size size;
+
+  /// The minimum size requested for the view in physical pixels.
+  final Size minSize;
+
+  /// The maximum size requested for the view in physical pixels.
+  final Size maxSize;
 
   /// The number of physical pixels on each side of the display rectangle into
   /// which the view can render, but over which the operating system will likely
