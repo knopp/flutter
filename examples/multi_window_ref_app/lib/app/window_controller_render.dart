@@ -3,7 +3,9 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
+import 'dialog_window_content.dart';
 import 'regular_window_content.dart';
+import 'tooltip_window_content.dart';
 import 'window_manager_model.dart';
 import 'window_settings.dart';
 
@@ -34,6 +36,34 @@ class WindowControllerRender extends StatelessWidget {
               window: controller as RegularWindowController,
               windowSettings: windowSettings,
               windowManagerModel: windowManagerModel),
+        );
+      case WindowArchetype.dialog:
+        final dialogController = controller as DialogWindowController;
+        final child = dialogController.parent != null
+            ? DialogWindowContent(
+                controller: dialogController,
+                windowSettings: windowSettings,
+                windowManagerModel: windowManagerModel,
+              )
+            : MaterialApp(
+                home: DialogWindowContent(
+                  controller: dialogController,
+                  windowSettings: windowSettings,
+                  windowManagerModel: windowManagerModel,
+                ),
+              );
+        return DialogWindow(
+          key: key,
+          controller: dialogController,
+          child: child,
+        );
+      case WindowArchetype.tooltip:
+        return TooltipWindow(
+          key: key,
+          controller: controller as TooltipWindowController,
+          child: TooltipWindowContent(
+            controller: controller as TooltipWindowController,
+          ),
         );
     }
   }
