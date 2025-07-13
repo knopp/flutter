@@ -108,7 +108,7 @@ static FlutterDesktopViewControllerRef CreateViewController(
   }
 
   // Must happen after engine is running.
-  controller->view()->SendInitialBounds();
+  controller->view()->SendMetricsEvent();
 
   // The Windows embedder listens to accessibility updates using the
   // view's HWND. The embedder's accessibility features may be stale if

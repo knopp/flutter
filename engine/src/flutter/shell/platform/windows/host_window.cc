@@ -161,25 +161,35 @@ std::unique_ptr<HostWindow> HostWindow::CreateDialogWindow(
       new HostWindowDialog(window_manager, engine, content_size, owner_window));
 }
 
+std::unique_ptr<HostWindow> HostWindow::CreateTooltipWindow(
+    WindowManager* window_manager,
+    FlutterWindowsEngine* engine,
+    const WindowSizing& content_size,
+    HWND owner_window,
+    const TooltipWindowCreationRequest& request) {
+  return std::unique_ptr<HostWindow>(new HostWindowTooltip(
+      window_manager, engine, content_size, owner_window, request));
+}
+
 HostWindow::HostWindow(WindowManager* window_manager,
                        FlutterWindowsEngine* engine,
                        WindowArchetype archetype,
                        DWORD window_style,
                        DWORD extended_window_style,
-                       const BoxConstraints& box_constraints,
+                       const WindowSizing& content_size,
                        Rect const initial_window_rect,
                        HWND owner_window)
     : window_manager_(window_manager),
       engine_(engine),
       archetype_(archetype),
-      box_constraints_(box_constraints) {
+      content_size_(content_size) {
   // Set up the view.
   auto view_window = std::make_unique<FlutterWindow>(
       initial_window_rect.width(), initial_window_rect.height(),
       engine->windows_proc_table());
 
   std::unique_ptr<FlutterWindowsView> view =
-      engine->CreateView(std::move(view_window));
+      engine->CreateView(std::move(view_window), this);
   FML_CHECK(view != nullptr);
 
   view_controller_ =
@@ -342,17 +352,19 @@ LRESULT HostWindow::HandleMessage(HWND hwnd,
       double const scale_factor =
           static_cast<double>(dpi) / USER_DEFAULT_SCREEN_DPI;
 
+      BoxConstraints box_constraints = content_size_.GetBoxConstraints();
+
       MINMAXINFO* info = reinterpret_cast<MINMAXINFO*>(lparam);
       Size const min_physical_size = ClampToVirtualScreen(Size(
-          box_constraints_.smallest().width() * scale_factor + non_client_width,
-          box_constraints_.smallest().height() * scale_factor +
+          box_constraints.smallest().width() * scale_factor + non_client_width,
+          box_constraints.smallest().height() * scale_factor +
               non_client_height));
 
       info->ptMinTrackSize.x = min_physical_size.width();
       info->ptMinTrackSize.y = min_physical_size.height();
       Size const max_physical_size = ClampToVirtualScreen(Size(
-          box_constraints_.biggest().width() * scale_factor + non_client_width,
-          box_constraints_.biggest().height() * scale_factor +
+          box_constraints.biggest().width() * scale_factor + non_client_width,
+          box_constraints.biggest().height() * scale_factor +
               non_client_height));
 
       info->ptMaxTrackSize.x = max_physical_size.width();
@@ -396,21 +408,14 @@ void HostWindow::SetContentSize(const WindowSizing& size) {
   WINDOWINFO window_info = {.cbSize = sizeof(WINDOWINFO)};
   GetWindowInfo(window_handle_, &window_info);
 
-  std::optional<Size> smallest, biggest;
-  if (size.has_view_constraints) {
-    smallest = Size(size.view_min_width, size.view_min_height);
-    if (size.view_max_width > 0 && size.view_max_height > 0) {
-      biggest = Size(size.view_max_width, size.view_max_height);
-    }
-  }
-
-  box_constraints_ = BoxConstraints(smallest, biggest);
+  content_size_ = size;
 
   if (size.has_preferred_view_size) {
+    BoxConstraints box_constraints = content_size_.GetBoxConstraints();
     std::optional<Size> const window_size = GetWindowSizeForClientSize(
         *engine_->windows_proc_table(),
         Size(size.preferred_view_width, size.preferred_view_height),
-        box_constraints_.smallest(), box_constraints_.biggest(),
+        box_constraints.smallest(), box_constraints.biggest(),
         window_info.dwStyle, window_info.dwExStyle, nullptr);
 
     if (window_size) {
@@ -553,6 +558,38 @@ void HostWindow::UpdateModalStateLayer() {
         child->DisableRecursively();
       }
     }
+  }
+}
+
+std::optional<flutter::BoxConstraints> HostWindow::GetViewConstraints() const {
+  if (content_size_.has_preferred_view_size) {
+    return std::nullopt;
+  } else {
+    return content_size_.GetBoxConstraints();
+  }
+}
+
+void HostWindow::ViewDidUpdateContents(const Size& size) {
+  if (content_size_.has_preferred_view_size) {
+    return;
+  }
+  WINDOWINFO window_info = {.cbSize = sizeof(WINDOWINFO)};
+  GetWindowInfo(window_handle_, &window_info);
+
+  UINT const dpi = GetDpiForHWND(window_handle_);
+  double const scale_factor =
+      static_cast<double>(dpi) / USER_DEFAULT_SCREEN_DPI;
+  Size logical_size(size.width() / scale_factor, size.height() / scale_factor);
+
+  std::optional<Size> const window_size = GetWindowSizeForClientSize(
+      *engine_->windows_proc_table(),
+      Size(logical_size.width(), logical_size.height()), std::nullopt,
+      std::nullopt, window_info.dwStyle, window_info.dwExStyle, nullptr);
+
+  if (window_size) {
+    SetWindowPos(window_handle_, NULL, 0, 0, window_size->width(),
+                 window_size->height(),
+                 SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
   }
 }
 

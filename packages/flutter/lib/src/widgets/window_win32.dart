@@ -72,9 +72,13 @@ class WindowingOwnerWin32 extends WindowingOwner {
     required Rect anchorRect,
     required WindowPositioner positioner,
   }) {
-    throw UnsupportedError(
-      'Current platform does not support windowing.\n'
-      'Implement a WindowingDelegate for this platform.',
+    return TooltipWindowControllerWin32(
+      owner: this,
+      delegate: delegate,
+      contentSize: WindowSizing(constraints: contentSizeConstraints),
+      parent: parent,
+      anchorRect: anchorRect,
+      positioner: positioner,
     );
   }
 
@@ -129,19 +133,25 @@ class WindowingOwnerWin32 extends WindowingOwner {
 class _HwndWrapper {
   _HwndWrapper({required this.hwnd});
 
-  @Native<Pointer<Void> Function(Int64, Int64)>(symbol: 'InternalFlutterWindows_WindowManager_GetTopLevelWindowHandle')
+  @Native<Pointer<Void> Function(Int64, Int64)>(
+    symbol: 'InternalFlutterWindows_WindowManager_GetTopLevelWindowHandle',
+  )
   external static Pointer<Void> getWindowHandle(int engineId, int viewId);
 
   @Native<Void Function(Pointer<Void>)>(symbol: 'DestroyWindow')
   external static void _destroyWindow(Pointer<Void> windowHandle);
 
-  @Native<_Size Function(Pointer<Void>)>(symbol: 'InternalFlutterWindows_WindowManager_GetWindowContentSize')
+  @Native<_Size Function(Pointer<Void>)>(
+    symbol: 'InternalFlutterWindows_WindowManager_GetWindowContentSize',
+  )
   external static _Size _getWindowContentSize(Pointer<Void> windowHandle);
 
   @Native<Void Function(Pointer<Void>, Pointer<ffi.Utf16>)>(symbol: 'SetWindowTextW')
   external static void _setWindowTitle(Pointer<Void> windowHandle, Pointer<ffi.Utf16> title);
 
-  @Native<Void Function(Pointer<Void>, Pointer<_Sizing>)>(symbol: 'InternalFlutterWindows_WindowManager_SetWindowContentSize')
+  @Native<Void Function(Pointer<Void>, Pointer<_Sizing>)>(
+    symbol: 'InternalFlutterWindows_WindowManager_SetWindowContentSize',
+  )
   external static void _setWindowContentSize(Pointer<Void> windowHandle, Pointer<_Sizing> size);
 
   @Native<Void Function(Pointer<Void>, Int32)>(symbol: 'ShowWindow')
@@ -512,6 +522,139 @@ class DialogWindowControllerWin32 extends DialogWindowController implements Wind
   external static int _createWindow(int engineId, Pointer<_DialogWindowCreationRequest> request);
 }
 
+/// The Win32 implementation of the dialog window controller.
+class TooltipWindowControllerWin32 extends TooltipWindowController
+    implements WindowsMessageHandler {
+  /// Creates a new dialog window controller for Win32. When this constructor
+  /// completes the FlutterView is created and framework is aware of it.
+  TooltipWindowControllerWin32({
+    required WindowingOwnerWin32 owner,
+    required TooltipWindowControllerDelegate delegate,
+    required WindowSizing contentSize,
+    FlutterView? parent,
+    required this.anchorRect,
+    required this.positioner,
+  }) : _owner = owner,
+       _delegate = delegate,
+       super.empty() {
+    final int engineId = PlatformDispatcher.instance.engineId!;
+
+    // If the parent is minimized, restore it to prevent the modal dialog from being hidden.
+    _HwndWrapper? parentWindow;
+    if (parent != null) {
+      parentWindow = _HwndWrapper(hwnd: _HwndWrapper.getWindowHandle(engineId, parent.viewId));
+    }
+
+    _onGetWindowPosition = NativeCallable<
+      Pointer<_Rect> Function(
+        Pointer<_Size> childSize,
+        Pointer<_Rect> parentRect,
+        Pointer<_Rect> outputRect,
+      )
+    >.isolateLocal(_handleOnGetWindowPosition);
+
+    final Pointer<_TooltipWindowCreationRequest> request =
+        ffi.calloc<_TooltipWindowCreationRequest>()
+          ..ref.contentSize.set(contentSize)
+          ..ref.parentWindow = parentWindow?.hwnd ?? nullptr
+          ..ref.onGetWindowPosition = _onGetWindowPosition.nativeFunction;
+    final int viewId = _createWindow(engineId, request);
+    ffi.calloc.free(request);
+    final FlutterView flutterView = WidgetsBinding.instance.platformDispatcher.views.firstWhere(
+      (FlutterView view) => view.viewId == viewId,
+    );
+    setView(flutterView);
+    owner.addMessageHandler(this);
+    _hwnd = _HwndWrapper(hwnd: _HwndWrapper.getWindowHandle(engineId, viewId));
+  }
+
+  @override
+  Size get contentSize {
+    return _hwnd.contentSize();
+  }
+
+  /// Returns HWND pointer to the top level window.
+  Pointer<Void> getWindowHandle() {
+    return _hwnd.hwnd;
+  }
+
+  @override
+  bool get destroyed => _hwnd._destroyed;
+
+  late final NativeCallable<
+    Pointer<_Rect> Function(
+      Pointer<_Size> childSize,
+      Pointer<_Rect> parentRect,
+      Pointer<_Rect> outputRect,
+    )
+  >
+  _onGetWindowPosition;
+
+  @override
+  void destroy() {
+    if (_hwnd.destroy()) {
+      _delegate.onWindowDestroyed();
+      _owner.removeMessageHandler(this);
+    }
+    _onGetWindowPosition.close();
+  }
+
+  @override
+  int? handleWindowsMessage(
+    FlutterView view,
+    Pointer<Void> windowHandle,
+    int message,
+    int wParam,
+    int lParam,
+  ) {
+    if (view.viewId != rootView.viewId) {
+      return null;
+    }
+
+    // Window will be destroyed from native side when owner is destroyed.
+    if (message == _HwndWrapper._WM_DESTROY && _hwnd.markDestroyed()) {
+      _delegate.onWindowDestroyed();
+    } else if (message == _HwndWrapper._WM_CLOSE) {
+      _delegate.onWindowCloseRequested(this);
+      return 0;
+    } else if (message == _HwndWrapper._WM_SIZE) {
+      notifyListeners();
+    }
+    return null;
+  }
+
+  final WindowPositioner positioner;
+  final Rect anchorRect;
+
+  Pointer<_Rect> _handleOnGetWindowPosition(
+    Pointer<_Size> childSize,
+    Pointer<_Rect> parentRect,
+    Pointer<_Rect> outputRect,
+  ) {
+    final Pointer<_Rect> result = ffi.calloc<_Rect>();
+    final Rect targetRect = positioner.placeWindow(
+      childSize: childSize.ref.toSize(),
+      anchorRect: anchorRect.translate(parentRect.ref.left, parentRect.ref.top),
+      parentRect: parentRect.ref.toRect(),
+      outputRect: outputRect.ref.toRect(),
+    );
+    result.ref.left = targetRect.left;
+    result.ref.top = targetRect.top;
+    result.ref.width = childSize.ref.width;
+    result.ref.height = childSize.ref.height;
+    return result;
+  }
+
+  final TooltipWindowControllerDelegate _delegate;
+  final WindowingOwnerWin32 _owner;
+  late final _HwndWrapper _hwnd;
+
+  @Native<Int64 Function(Int64, Pointer<_TooltipWindowCreationRequest>)>(
+    symbol: 'InternalFlutterWindows_WindowManager_CreateTooltipWindow',
+  )
+  external static int _createWindow(int engineId, Pointer<_TooltipWindowCreationRequest> request);
+}
+
 /// Request to initialize windowing system.
 final class _WindowingInitRequest extends Struct {
   external Pointer<NativeFunction<Void Function(Pointer<_WindowsMessage>)>> onMessage;
@@ -574,6 +717,21 @@ final class _DialogWindowCreationRequest extends Struct {
   external Pointer<Void> parentWindow;
 }
 
+final class _TooltipWindowCreationRequest extends Struct {
+  external _Sizing contentSize;
+  external Pointer<Void> parentWindow;
+  external Pointer<
+    NativeFunction<
+      Pointer<_Rect> Function(
+        Pointer<_Size> childSize,
+        Pointer<_Rect> parentRect,
+        Pointer<_Rect> outputRect,
+      )
+    >
+  >
+  onGetWindowPosition;
+}
+
 /// Windows message received for all top level windows (regardless whether
 /// they are created using a windowing controller).
 final class _WindowsMessage extends Struct {
@@ -604,4 +762,31 @@ final class _Size extends Struct {
 
   @Double()
   external double height;
+
+  Size toSize() {
+    return Size(width, height);
+  }
+}
+
+final class _Rect extends Struct {
+  @Double()
+  external double left;
+
+  @Double()
+  external double top;
+
+  @Double()
+  external double width;
+
+  @Double()
+  external double height;
+
+  Rect toRect() {
+    return Rect.fromLTWH(left, top, width, height);
+  }
+
+  @override
+  String toString() {
+    return 'Rect(left: $left, top: $top, width: $width, height: $height)';
+  }
 }

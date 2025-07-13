@@ -32,7 +32,6 @@
 #include "flutter/shell/platform/windows/flutter_desktop_messenger.h"
 #include "flutter/shell/platform/windows/flutter_project_bundle.h"
 #include "flutter/shell/platform/windows/flutter_windows_texture_registrar.h"
-#include "flutter/shell/platform/windows/host_window.h"
 #include "flutter/shell/platform/windows/keyboard_handler_base.h"
 #include "flutter/shell/platform/windows/keyboard_key_embedder_handler.h"
 #include "flutter/shell/platform/windows/platform_handler.h"
@@ -56,6 +55,8 @@ namespace flutter {
 constexpr FlutterViewId kImplicitViewId = 0;
 
 class FlutterWindowsView;
+class FlutterWindowsViewSizingDelegate;
+class WindowManager;
 
 // Update the thread priority for the Windows engine.
 static void WindowsPlatformThreadPrioritySetter(
@@ -132,7 +133,8 @@ class FlutterWindowsEngine {
   //
   // Returns null on failure.
   std::unique_ptr<FlutterWindowsView> CreateView(
-      std::unique_ptr<WindowBindingHandler> window);
+      std::unique_ptr<WindowBindingHandler> window,
+      FlutterWindowsViewSizingDelegate* sizing_delegate = nullptr);
 
   // Remove a view. The engine will no longer render into it.
   virtual void RemoveView(FlutterViewId view_id);

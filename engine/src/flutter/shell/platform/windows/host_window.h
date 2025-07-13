@@ -12,20 +12,20 @@
 #include "flutter/fml/macros.h"
 #include "flutter/shell/platform/common/geometry.h"
 #include "flutter/shell/platform/common/windowing.h"
+#include "flutter/shell/platform/windows/flutter_windows_view.h"
 #include "flutter/shell/platform/windows/window_manager.h"
 
 namespace flutter {
 
 class WindowManager;
 class WindowsProcTable;
-class FlutterWindowsView;
 class FlutterWindowsViewController;
 
 // A Win32 window that hosts a |FlutterWindow| in its client area.
 // The default implementation is a regular window, but it can be
 // subclassed to create different types of windows, such as dialogs.
 // See |HostWindowDialog| for an example.
-class HostWindow {
+class HostWindow : private FlutterWindowsViewSizingDelegate {
  public:
   virtual ~HostWindow();
 
@@ -52,6 +52,13 @@ class HostWindow {
       const WindowSizing& content_size,
       HWND owner_window);
 
+  static std::unique_ptr<HostWindow> CreateTooltipWindow(
+      WindowManager* window_manager,
+      FlutterWindowsEngine* engine,
+      const WindowSizing& content_size,
+      HWND owner_window,
+      const TooltipWindowCreationRequest& request);
+
   // Returns the instance pointer for |hwnd| or nullptr if invalid.
   static HostWindow* GetThisFromHandle(HWND hwnd);
 
@@ -70,6 +77,11 @@ class HostWindow {
   void UpdateModalStateLayer();
 
  protected:
+  std::optional<flutter::BoxConstraints> GetViewConstraints() const override;
+
+  void ViewDidUpdateContents(const Size& size) override;
+
+ protected:
   friend WindowManager;
 
   HostWindow(WindowManager* window_manager,
@@ -77,7 +89,7 @@ class HostWindow {
              WindowArchetype archetype,
              DWORD window_style,
              DWORD extended_window_style,
-             const BoxConstraints& box_constraints,
+             const WindowSizing& content_size,
              Rect const initial_window_rect,
              HWND owner_window);
 
@@ -146,7 +158,7 @@ class HostWindow {
   HWND window_handle_ = nullptr;
 
   // The constraints on the window's client area.
-  BoxConstraints box_constraints_;
+  WindowSizing content_size_;
 
   // True while handling WM_DESTROY; used to detect in-progress destruction.
   bool is_being_destroyed_ = false;

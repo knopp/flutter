@@ -57,6 +57,19 @@ FlutterViewId WindowManager::CreateDialogWindow(
   return view_id;
 }
 
+FlutterViewId WindowManager::CreateTooltipWindow(
+    const TooltipWindowCreationRequest* request) {
+  auto window = HostWindow::CreateTooltipWindow(
+      this, engine_, request->content_size, request->parent_window, *request);
+  if (!window || !window->GetWindowHandle()) {
+    FML_LOG(ERROR) << "Failed to create host window";
+    return -1;
+  }
+  FlutterViewId const view_id = window->view_controller_->view()->view_id();
+  active_windows_[window->GetWindowHandle()] = std::move(window);
+  return view_id;
+}
+
 void WindowManager::OnEngineShutdown() {
   // Don't send any more messages to isolate.
   on_message_ = nullptr;
@@ -142,6 +155,14 @@ FlutterViewId InternalFlutterWindows_WindowManager_CreateDialogWindow(
   return engine->window_manager()->CreateDialogWindow(request);
 }
 
+FlutterViewId InternalFlutterWindows_WindowManager_CreateTooltipWindow(
+    int64_t engine_id,
+    const flutter::TooltipWindowCreationRequest* request) {
+  flutter::FlutterWindowsEngine* engine =
+      flutter::FlutterWindowsEngine::GetEngineForId(engine_id);
+  return engine->window_manager()->CreateTooltipWindow(request);
+}
+
 HWND InternalFlutterWindows_WindowManager_GetTopLevelWindowHandle(
     int64_t engine_id,
     FlutterViewId view_id) {
@@ -155,8 +176,8 @@ HWND InternalFlutterWindows_WindowManager_GetTopLevelWindowHandle(
   }
 }
 
-FlutterWindowSize InternalFlutterWindows_WindowManager_GetWindowContentSize(
-    HWND hwnd) {
+flutter::FlutterWindowSize
+InternalFlutterWindows_WindowManager_GetWindowContentSize(HWND hwnd) {
   RECT rect;
   GetClientRect(hwnd, &rect);
   double const dpr = FlutterDesktopGetDpiForHWND(hwnd) /

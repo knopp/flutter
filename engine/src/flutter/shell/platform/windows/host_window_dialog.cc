@@ -7,22 +7,6 @@
 #include "flutter/shell/platform/windows/flutter_windows_engine.h"
 
 namespace {
-flutter::BoxConstraints GetBoxConstraints(
-    const flutter::WindowSizing& content_size) {
-  std::optional<flutter::Size> smallest = std::nullopt;
-  std::optional<flutter::Size> biggest = std::nullopt;
-
-  if (content_size.has_view_constraints) {
-    smallest = flutter::Size(content_size.view_min_width,
-                             content_size.view_min_height);
-    if (content_size.view_max_width > 0 && content_size.view_max_height > 0) {
-      biggest = flutter::Size(content_size.view_max_width,
-                              content_size.view_max_height);
-    }
-  }
-
-  return flutter::BoxConstraints(smallest, biggest);
-}
 
 DWORD GetWindowStyleForDialog(HWND owner_window) {
   DWORD window_style = WS_OVERLAPPED | WS_CAPTION | WS_THICKFRAME;
@@ -59,9 +43,9 @@ HostWindowDialog::HostWindowDialog(WindowManager* window_manager,
           WindowArchetype::kDialog,
           GetWindowStyleForDialog(owner_window),
           GetExtendedWindowStyleForDialog(owner_window),
-          GetBoxConstraints(content_size),
+          content_size,
           [&]() -> Rect {
-            auto const constraints = GetBoxConstraints(content_size);
+            auto const constraints = content_size.GetBoxConstraints();
             auto const window_style = GetWindowStyleForDialog(owner_window);
             auto const extended_window_style =
                 GetExtendedWindowStyleForDialog(owner_window);

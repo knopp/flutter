@@ -105,10 +105,12 @@ FlutterWindowsView::FlutterWindowsView(
     FlutterViewId view_id,
     FlutterWindowsEngine* engine,
     std::unique_ptr<WindowBindingHandler> window_binding,
-    std::shared_ptr<WindowsProcTable> windows_proc_table)
+    std::shared_ptr<WindowsProcTable> windows_proc_table,
+    FlutterWindowsViewSizingDelegate* sizing_delegate)
     : view_id_(view_id),
       engine_(engine),
-      windows_proc_table_(std::move(windows_proc_table)) {
+      windows_proc_table_(std::move(windows_proc_table)),
+      sizing_delegate_(sizing_delegate) {
   if (windows_proc_table_ == nullptr) {
     windows_proc_table_ = std::make_shared<WindowsProcTable>();
   }
@@ -151,12 +153,25 @@ bool FlutterWindowsView::OnEmptyFrameGenerated() {
 }
 
 bool FlutterWindowsView::OnFrameGenerated(size_t width, size_t height) {
-  // Called on the raster thread.
-  std::unique_lock<std::mutex> lock(resize_mutex_);
-
   if (surface_ == nullptr || !surface_->IsValid()) {
     return false;
   }
+
+  if (IsSizedToContents()) {
+    if (!ResizeRenderSurface(width, height)) {
+      return false;
+    }
+    // TODO(knopp): This is racy the delegate might not be valid in the block
+    engine_->task_runner()->PostTask(
+        [delegate = sizing_delegate_, width, height] {
+          Size size(width, height);
+          delegate->ViewDidUpdateContents(size);
+        });
+    return true;
+  }
+
+  // Called on the raster thread.
+  std::unique_lock<std::mutex> lock(resize_mutex_);
 
   if (resize_status_ != ResizeState::kResizeStarted) {
     return true;
@@ -185,6 +200,11 @@ void FlutterWindowsView::ForceRedraw() {
 
 // Called on the platform thread.
 bool FlutterWindowsView::OnWindowSizeChanged(size_t width, size_t height) {
+  // For views sized to contents resize synchronization is disabled.
+  if (IsSizedToContents()) {
+    return true;
+  }
+
   if (!engine_->egl_manager()) {
     SendWindowMetrics(width, height, binding_handler_->GetDpiScale());
     return true;
@@ -379,20 +399,30 @@ void FlutterWindowsView::SendWindowMetrics(size_t width,
 }
 
 FlutterWindowMetricsEvent FlutterWindowsView::CreateWindowMetricsEvent() const {
-  PhysicalWindowBounds bounds = binding_handler_->GetPhysicalWindowBounds();
   double pixel_ratio = binding_handler_->GetDpiScale();
 
   FlutterWindowMetricsEvent event = {};
   event.struct_size = sizeof(event);
-  event.width = bounds.width;
-  event.height = bounds.height;
   event.pixel_ratio = pixel_ratio;
   event.view_id = view_id_;
+
+  if (!IsSizedToContents()) {
+    PhysicalWindowBounds bounds = binding_handler_->GetPhysicalWindowBounds();
+    event.width = bounds.width;
+    event.height = bounds.height;
+  } else {
+    auto min_size = sizing_delegate_->GetViewConstraints()->smallest();
+    auto max_size = sizing_delegate_->GetViewConstraints()->biggest();
+    event.min_width = min_size.width() * pixel_ratio;
+    event.min_height = min_size.height() * pixel_ratio;
+    event.max_width = max_size.width() * pixel_ratio;
+    event.max_height = max_size.height() * pixel_ratio;
+  }
 
   return event;
 }
 
-void FlutterWindowsView::SendInitialBounds() {
+void FlutterWindowsView::SendMetricsEvent() {
   // Non-implicit views' initial window metrics are sent when the view is added
   // to the engine.
   if (!IsImplicitView()) {
@@ -842,6 +872,10 @@ bool FlutterWindowsView::NeedsVsync() const {
   // the system itself synchronizes with vsync.
   // See: https://learn.microsoft.com/windows/win32/dwm/composition-ovw
   return !windows_proc_table_->DwmIsCompositionEnabled();
+}
+
+bool FlutterWindowsView::IsSizedToContents() const {
+  return sizing_delegate_ != nullptr && sizing_delegate_->GetViewConstraints();
 }
 
 }  // namespace flutter

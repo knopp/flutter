@@ -14,6 +14,7 @@
 #include "flutter/shell/platform/common/public/flutter_export.h"
 
 #include "flutter/fml/macros.h"
+#include "flutter/shell/platform/common/geometry.h"
 #include "flutter/shell/platform/common/isolate_scope.h"
 #include "flutter/shell/platform/embedder/embedder.h"
 
@@ -42,6 +43,32 @@ struct WindowSizing {
   double view_min_height;
   double view_max_width;
   double view_max_height;
+
+  flutter::BoxConstraints GetBoxConstraints() const {
+    std::optional<flutter::Size> smallest = std::nullopt;
+    std::optional<flutter::Size> biggest = std::nullopt;
+
+    if (has_view_constraints) {
+      smallest = flutter::Size(view_min_width, view_min_height);
+      if (view_max_width > 0 && view_max_height > 0) {
+        biggest = flutter::Size(view_max_width, view_max_height);
+      }
+    }
+
+    return flutter::BoxConstraints(smallest, biggest);
+  }
+};
+
+struct FlutterWindowRect {
+  double left;
+  double top;
+  double width;
+  double height;
+};
+
+struct FlutterWindowSize {
+  double width;
+  double height;
 };
 
 struct WindowingInitRequest {
@@ -55,6 +82,15 @@ struct RegularWindowCreationRequest {
 struct DialogWindowCreationRequest {
   WindowSizing content_size;
   HWND parent_window;
+};
+
+struct TooltipWindowCreationRequest {
+  WindowSizing content_size;
+  HWND parent_window;
+  FlutterWindowRect* (*on_get_window_position)(
+      const FlutterWindowSize& child_size,
+      const FlutterWindowRect& parent_rect,
+      const FlutterWindowRect& output_rect);
 };
 
 // A manager class for managing |HostWindow| instances.
@@ -71,6 +107,9 @@ class WindowManager {
   FlutterViewId CreateRegularWindow(
       const RegularWindowCreationRequest* request);
   FlutterViewId CreateDialogWindow(const DialogWindowCreationRequest* request);
+
+  FlutterViewId CreateTooltipWindow(
+      const TooltipWindowCreationRequest* request);
 
   // Message handler called by |HostWindow::WndProc| to process window
   // messages before delegating them to the host window. This allows the
@@ -122,6 +161,11 @@ FlutterViewId InternalFlutterWindows_WindowManager_CreateDialogWindow(
     int64_t engine_id,
     const flutter::DialogWindowCreationRequest* request);
 
+FLUTTER_EXPORT
+FlutterViewId InternalFlutterWindows_WindowManager_CreateTooltipWindow(
+    int64_t engine_id,
+    const flutter::TooltipWindowCreationRequest* request);
+
 // Retrives the HWND associated with this |engine_id| and |view_id|. Returns
 // NULL if the HWND cannot be found
 FLUTTER_EXPORT
@@ -129,14 +173,9 @@ HWND InternalFlutterWindows_WindowManager_GetTopLevelWindowHandle(
     int64_t engine_id,
     FlutterViewId view_id);
 
-struct FlutterWindowSize {
-  double width;
-  double height;
-};
-
 FLUTTER_EXPORT
-FlutterWindowSize InternalFlutterWindows_WindowManager_GetWindowContentSize(
-    HWND hwnd);
+flutter::FlutterWindowSize
+InternalFlutterWindows_WindowManager_GetWindowContentSize(HWND hwnd);
 
 FLUTTER_EXPORT
 void InternalFlutterWindows_WindowManager_SetWindowContentSize(

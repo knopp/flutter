@@ -32,7 +32,8 @@ class _TooltipWindowContentState extends State<TooltipWindowContent>
     Future<void>.delayed(const Duration(seconds: 10), () {
       widget.controller.destroy();
     });
-    _animationController = AnimationController(duration: const Duration(seconds: 1), vsync: this);
+    _animationController =
+        AnimationController(duration: const Duration(seconds: 1), vsync: this);
     _animationController.repeat(reverse: true);
   }
 
@@ -41,7 +42,8 @@ class _TooltipWindowContentState extends State<TooltipWindowContent>
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, _) {
-        final double padding = 20 + (16.0 * _animationController.value).ceilToDouble() / 1.0;
+        final double padding =
+            20 + (16.0 * _animationController.value).ceilToDouble() / 1.0;
         // print('Padding: $padding');
         return DefaultTextStyle(
           style: const TextStyle(
@@ -55,7 +57,13 @@ class _TooltipWindowContentState extends State<TooltipWindowContent>
               color: const Color(0xFFFF55FF),
               borderRadius: BorderRadius.circular(14.0),
             ),
-            padding: EdgeInsets.all(padding),
+            padding: EdgeInsets.only(
+              right: padding,
+              bottom: padding,
+              left: padding,
+              top: padding,
+            ),
+            // alignment: Alignment.topLeft,
             child: Text('Tooltip Window'),
           ),
         );

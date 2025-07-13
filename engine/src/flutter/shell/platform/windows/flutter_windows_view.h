@@ -29,6 +29,17 @@ namespace flutter {
 // A unique identifier for a view.
 using FlutterViewId = int64_t;
 
+class FlutterWindowsViewSizingDelegate {
+ public:
+  // For view that is sized to content this method should return the
+  // constraints that the view should use to size itself.
+  virtual std::optional<flutter::BoxConstraints> GetViewConstraints() const;
+
+  // Called when view content size changes. The container should
+  // update its size to match the content size.
+  virtual void ViewDidUpdateContents(const Size& size) = 0;
+};
+
 // An OS-windowing neutral abstration for a Flutter view that works
 // with win32 HWNDs.
 class FlutterWindowsView : public WindowBindingHandlerDelegate {
@@ -39,7 +50,8 @@ class FlutterWindowsView : public WindowBindingHandlerDelegate {
       FlutterViewId view_id,
       FlutterWindowsEngine* engine,
       std::unique_ptr<WindowBindingHandler> window_binding,
-      std::shared_ptr<WindowsProcTable> windows_proc_table = nullptr);
+      std::shared_ptr<WindowsProcTable> windows_proc_table = nullptr,
+      FlutterWindowsViewSizingDelegate* sizing_delegate = nullptr);
 
   virtual ~FlutterWindowsView();
 
@@ -94,11 +106,11 @@ class FlutterWindowsView : public WindowBindingHandlerDelegate {
   // Used to notify the engine of a view's current size and device pixel ratio.
   FlutterWindowMetricsEvent CreateWindowMetricsEvent() const;
 
-  // Send initial bounds to embedder. Must occur after engine has initialized.
+  // Send metrics event to embedder. Must occur after engine has initialized.
   //
   // This is a no-op if this is not the implicit view. Non-implicit views'
   // initial window metrics are sent when the view is added to the engine.
-  void SendInitialBounds();
+  void SendMetricsEvent();
 
   // Set the text of the alert, and create it if it does not yet exist.
   void AnnounceAlert(const std::wstring& text);
@@ -413,6 +425,11 @@ class FlutterWindowsView : public WindowBindingHandlerDelegate {
   // to prevent screen tearing.
   bool NeedsVsync() const;
 
+  // Returns true if the view is sized to content. For view sized to content
+  // the resize synchronization is disabled and the size constraints are passed
+  // to window metrics event instead of size.
+  bool IsSizedToContents() const;
+
   // The view's unique identifier.
   FlutterViewId view_id_;
 
@@ -454,6 +471,9 @@ class FlutterWindowsView : public WindowBindingHandlerDelegate {
 
   // The accessibility bridge associated with this view.
   std::shared_ptr<AccessibilityBridgeWindows> accessibility_bridge_;
+
+  // Sizing delegate for the view.
+  FlutterWindowsViewSizingDelegate* sizing_delegate_ = nullptr;
 
   FML_DISALLOW_COPY_AND_ASSIGN(FlutterWindowsView);
 };
