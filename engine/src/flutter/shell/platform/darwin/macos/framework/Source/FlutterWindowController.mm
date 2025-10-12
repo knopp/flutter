@@ -239,7 +239,6 @@
   }
   if (owner != nil) {
     [_windows removeObject:owner];
-
     for (NSWindow* win in owner.window.sheets) {
       [self destroyWindow:win];
     }
@@ -247,7 +246,6 @@
     for (NSWindow* win in owner.window.childWindows) {
       [self destroyWindow:win];
     }
-
     // Make sure to unregister the controller from the engine and remove the FlutterView
     // before destroying the window and Flutter NSView.
     [owner.flutterViewController dispose];
