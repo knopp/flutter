@@ -340,7 +340,7 @@ static void FlipRect(NSRect& rect, const NSRect& globalScreenFrame) {
   window.ignoresMouseEvents = YES;
   window.collectionBehavior = NSWindowCollectionBehaviorAuxiliary;
   [parent addChildWindow:window ordered:NSWindowAbove];
-  window.alphaValue = 0.0;
+  // window.alphaValue = 0.0;
   return c.viewIdentifier;
 }
 
