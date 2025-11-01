@@ -20,6 +20,7 @@ import 'dart:io';
 import 'dart:ui' show Display, FlutterView;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/src/widgets/window_positioner.dart';
 
 import '../foundation/_features.dart';
 import '_window.dart';
@@ -588,6 +589,17 @@ class WindowingOwnerLinux extends WindowingOwner {
     );
     _windows[controller.rootView.viewId] = controller._window;
     return controller;
+  }
+
+  @override
+  TooltipWindowController createTooltipWindowController({
+    required BoxConstraints contentSizeConstraints,
+    required Rect anchorRect,
+    required WindowPositioner positioner,
+    required TooltipWindowControllerDelegate delegate,
+    required BaseWindowController parent,
+  }) {
+    throw UnimplementedError();
   }
 }
 
