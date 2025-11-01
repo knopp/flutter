@@ -181,6 +181,11 @@ static void FlipRect(NSRect& rect, const NSRect& globalScreenFrame) {
                   (rect.origin.y + rect.size.height);
 }
 
+- (void)updatePosition {
+  [self viewDidUpdateContents:self.flutterViewController.flutterView
+                     withSize:self.flutterViewController.flutterView.bounds.size];
+}
+
 - (void)viewDidUpdateContents:(FlutterView*)view withSize:(NSSize)newSize {
   if (_creationRequest.on_get_window_position == nullptr) {
     // There is no positioner associated with this window.
@@ -533,6 +538,12 @@ char* InternalFlutter_Window_GetTitle(void* window) {
 bool InternalFlutter_Window_IsActivated(void* window) {
   NSWindow* w = (__bridge NSWindow*)window;
   return w.isKeyWindow;
+}
+
+void InternalFlutter_Window_UpdatePosition(void* window) {
+  NSWindow* w = (__bridge NSWindow*)window;
+  FlutterWindowOwner* owner = (FlutterWindowOwner*)w.delegate;
+  [owner updatePosition];
 }
 
 // NOLINTEND(google-objc-function-naming)

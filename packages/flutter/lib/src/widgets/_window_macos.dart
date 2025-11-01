@@ -263,6 +263,17 @@ class TooltipWindowControllerMacOS extends TooltipWindowController with _WindowC
   }
 
   @override
+  void updatePosition({Rect? anchorRect, WindowPositioner? positioner}) {
+    if (anchorRect != null) {
+      this.anchorRect = anchorRect;
+    }
+    if (positioner != null) {
+      this.positioner = positioner;
+    }
+    _MacOSPlatformInterface.updateWindowPosition(getWindowHandle());
+  }
+
+  @override
   void _handleOnShouldClose() {
     _delegate.onWindowCloseRequested(this);
   }
@@ -299,8 +310,8 @@ class TooltipWindowControllerMacOS extends TooltipWindowController with _WindowC
     return result;
   }
 
-  final WindowPositioner positioner;
-  final Rect anchorRect;
+  WindowPositioner positioner;
+  Rect anchorRect;
   final TooltipWindowControllerDelegate _delegate;
 }
 
@@ -858,6 +869,9 @@ class _MacOSPlatformInterface {
 
   @Native<Bool Function(Pointer<Void>)>(symbol: 'InternalFlutter_Window_IsActivated')
   external static bool isActivated(Pointer<Void> windowHandle);
+
+  @Native<Void Function(Pointer<Void>)>(symbol: 'InternalFlutter_Window_UpdatePosition')
+  external static void updateWindowPosition(Pointer<Void> windowHandle);
 }
 
 // FFI utilities.

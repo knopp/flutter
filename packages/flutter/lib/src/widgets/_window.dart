@@ -641,6 +641,8 @@ abstract class TooltipWindowController extends BaseWindowController {
     return controller;
   }
 
+  void updatePosition({Rect? anchorRect, WindowPositioner? positioner});
+
   @protected
   /// Creates an empty [TooltipWindowController].
   TooltipWindowController.empty();

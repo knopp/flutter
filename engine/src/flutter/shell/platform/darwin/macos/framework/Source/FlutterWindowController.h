@@ -143,6 +143,9 @@ char* InternalFlutter_Window_GetTitle(void* window);
 FLUTTER_DARWIN_EXPORT
 bool InternalFlutter_Window_IsActivated(void* window);
 
+FLUTTER_DARWIN_EXPORT
+void InternalFlutter_Window_UpdatePosition(void* window);
+
 // NOLINTEND(google-objc-function-naming)
 }
 
