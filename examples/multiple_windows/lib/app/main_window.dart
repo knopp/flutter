@@ -276,6 +276,10 @@ class _WindowCreatorCard extends StatelessWidget {
                         childAnchor: WindowPositionerAnchor.left,
                         parentAnchor: WindowPositionerAnchor.right,
                         offset: const Offset(10, 0),
+                        constraintAdjustment: {
+                          WindowPositionerConstraintAdjustment.slideX,
+                          WindowPositionerConstraintAdjustment.slideY,
+                        }
                       ),
                       delegate: _TooltipWindowControllerDelegate(
                         onDestroyed: () {
