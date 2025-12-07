@@ -1053,7 +1053,7 @@ class _Win32PlatformInterface {
   )
   external static HWND getWindowHandle(int engineId, int viewId);
 
-  @ffi.Native<ffi.Void Function(HWND)>(symbol: 'DestroyWindow')
+  @ffi.Native<ffi.Void Function(HWND)>(symbol: 'InternalFlutterWindows_WindowManager_DestroyWindow')
   external static void destroyWindow(HWND windowHandle);
 
   @ffi.Native<_ActualContentSize Function(HWND)>(
