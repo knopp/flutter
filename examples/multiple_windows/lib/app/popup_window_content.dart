@@ -31,7 +31,6 @@ class _PopupWindowContentState extends State<PopupWindowContent> {
   }
 
   @override
-
   Widget build(BuildContext context) {
     return RepeatingAnimationBuilder(
       animatable: TweenSequence<double>([
