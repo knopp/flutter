@@ -7,6 +7,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/_window.dart';
+import 'package:multiple_windows/app/popup_button.dart';
+import 'package:multiple_windows/app/popup_window_edit_dialog.dart';
 
 import 'popup_button.dart';
 import 'popup_window_edit_dialog.dart';
