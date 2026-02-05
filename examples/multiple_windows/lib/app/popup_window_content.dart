@@ -32,7 +32,7 @@ class _PopupWindowContentState extends State<PopupWindowContent> {
 
   @override
   Widget build(BuildContext context) {
-    return RepeatingAnimationBuilder(
+    return Overlay.wrap(child: RepeatingAnimationBuilder(
       animatable: TweenSequence<double>([
         TweenSequenceItem(
           tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -118,6 +118,6 @@ class _PopupWindowContentState extends State<PopupWindowContent> {
           ),
         );
       },
-    );
+    ));
   }
 }
