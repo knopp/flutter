@@ -52,4 +52,4 @@ class HostWindowPopup : public HostWindow,
 };
 }  // namespace flutter
 
-#endif
+#endif  // FLUTTER_SHELL_PLATFORM_WINDOWS_HOST_WINDOW_POPUP_H_

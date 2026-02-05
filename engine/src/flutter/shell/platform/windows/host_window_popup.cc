@@ -31,12 +31,12 @@ HostWindowPopup::HostWindowPopup(
   InitializeFlutterView(HostWindowInitializationParams{
       .archetype = WindowArchetype::kPopup,
       .window_style = WS_POPUP,
-      .extended_window_style = WS_EX_TOOLWINDOW,
+      .extended_window_style = WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW,
       .box_constraints = constraints,
       .initial_window_rect = {{0, 0}, {initial_width, initial_height}},
       .title = L"",
       .owner_window = parent,
-      .nCmdShow = SW_SHOW,
+      .nCmdShow = SW_SHOWNOACTIVATE,
       .sizing_delegate = this,
       .is_sized_to_content = is_sized_to_content});
 }
@@ -104,7 +104,7 @@ void HostWindowPopup::UpdatePosition() {
                  parent_bottom_right.y - parent_top_left.y},
       work_area);
   SetWindowPos(window_handle_, HWND_TOP, rect->left, rect->top, rect->width,
-               rect->height, SWP_NOOWNERZORDER);
+               rect->height, SWP_NOACTIVATE | SWP_NOOWNERZORDER);
   free(rect);
 
   // The positioner constrained the dimensions more than current size, apply
@@ -119,6 +119,26 @@ LRESULT HostWindowPopup::HandleMessage(HWND hwnd,
                                        UINT message,
                                        WPARAM wparam,
                                        LPARAM lparam) {
+  switch (message) {
+    case WM_MOUSEACTIVATE:
+      // Prevent activation when clicked
+      SetForegroundWindow(parent_);
+      SetFocus(parent_);
+      return MA_NOACTIVATE;
+
+    case WM_NCACTIVATE:
+      // Return TRUE to prevent visual activation changes
+      return TRUE;
+
+    case WM_ACTIVATE:
+      // Immediately deactivate if somehow activated
+      if (LOWORD(wparam) != WA_INACTIVE) {
+        SetForegroundWindow(parent_);
+        SetFocus(parent_);
+      }
+      break;
+  }
+
   return HostWindow::HandleMessage(hwnd, message, wparam, lparam);
 }
 
