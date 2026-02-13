@@ -7,6 +7,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/_window.dart';
+import 'package:multiple_windows/app/popup_button.dart';
+import 'package:multiple_windows/app/popup_window_edit_dialog.dart';
 
 import 'regular_window_content.dart';
 import 'window_settings_dialog.dart';
@@ -135,7 +137,10 @@ class _WindowsTable extends StatelessWidget {
         context: context,
         controller: tooltip,
       ),
-      PopupWindowController() => null,
+      final PopupWindowController popup => showPopupWindowEditDialog(
+        context: context,
+        controller: popup,
+      ),
     };
   }
 
@@ -258,6 +263,8 @@ class _WindowCreatorCard extends StatelessWidget {
                       },
                       child: const Text('Modal Dialog'),
                     ),
+                    const SizedBox(height: 8),
+                    PopupButton(parentController: windowController),
                     const SizedBox(height: 8),
                     Container(
                       alignment: Alignment.bottomRight,
