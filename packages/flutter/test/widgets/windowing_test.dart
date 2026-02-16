@@ -147,19 +147,16 @@ class _StubPopupWindowController extends PopupWindowController {
   BaseWindowController get parent => _StubRegularWindowController(tester);
 
   @override
-  bool get isActivated => true;
-
-  @override
   Size get contentSize => Size.zero;
-
-  @override
-  void activate() {}
 
   @override
   void setConstraints(BoxConstraints constraints) {}
 
   @override
   void destroy() {}
+
+  @override
+  void updatePosition({Rect? anchorRect, WindowPositioner? positioner}) {}
 }
 
 void main() {
