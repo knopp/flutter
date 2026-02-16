@@ -1493,7 +1493,7 @@ class WindowScope extends InheritedModel<_WindowControllerAspect> {
       RegularWindowController() => controller.isActivated,
       DialogWindowController() => controller.isActivated,
       TooltipWindowController() => false,
-      PopupWindowController() => controller.isActivated,
+      PopupWindowController() => false,
     };
   }
 
@@ -1517,7 +1517,7 @@ class WindowScope extends InheritedModel<_WindowControllerAspect> {
       RegularWindowController() => controller.isActivated,
       DialogWindowController() => controller.isActivated,
       TooltipWindowController() => false,
-      PopupWindowController() => controller.isActivated,
+      PopupWindowController() => false,
     };
   }
 
@@ -1736,8 +1736,7 @@ class WindowScope extends InheritedModel<_WindowControllerAspect> {
               final DialogWindowController dialog =>
                 dialog.isActivated != (oldWidget.controller as DialogWindowController).isActivated,
               TooltipWindowController() => false,
-              final PopupWindowController popup =>
-                popup.isActivated != (oldWidget.controller as PopupWindowController).isActivated,
+              PopupWindowController() => false,
             },
             _WindowControllerAspect.maximized => switch (controller) {
               final RegularWindowController regular =>
