@@ -845,7 +845,7 @@ void main() {
           ),
         );
 
-        expect(isActivated, equals(true));
+        expect(isActivated, equals(false));
       });
 
       testWidgets('Can access WindowScope.maybeIsActivatedOf for regular windows', (
@@ -933,7 +933,7 @@ void main() {
           ),
         );
 
-        expect(isActivated, equals(true));
+        expect(isActivated, equals(false));
       });
 
       testWidgets('Can access WindowScope.isMinimizedOf for regular windows', (
