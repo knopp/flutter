@@ -203,7 +203,6 @@ class WindowingOwnerWin32 extends WindowingOwner {
     required Rect anchorRect,
     required WindowPositioner positioner,
     required BaseWindowController parent,
-    required bool isSizedToContent,
   }) {
     return PopupWindowControllerWin32(
       owner: this,
