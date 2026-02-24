@@ -58,6 +58,12 @@ class FlutterWindowsView : public WindowBindingHandlerDelegate {
 
   virtual ~FlutterWindowsView();
 
+  // Resets the sizing delegate. This is used during clean-up where the parent
+  // window (the sizing delegate) gets destroyed before the view.
+  // Otherwise the sizing delegate may be called from the raster thread after it
+  // has been destroyed.
+  void ResetSizingDelegate();
+
   // Get the view's unique identifier.
   FlutterViewId view_id() const;
 

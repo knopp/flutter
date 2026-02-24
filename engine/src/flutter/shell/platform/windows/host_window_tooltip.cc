@@ -130,6 +130,10 @@ LRESULT HostWindowTooltip::HandleMessage(HWND hwnd,
       // Return TRUE to prevent visual activation changes
       return TRUE;
 
+    case WM_DESTROY:
+      view_controller_->view()->ResetSizingDelegate();
+      break;
+
     case WM_ACTIVATE:
       // Immediately deactivate if somehow activated
       if (LOWORD(wparam) != WA_INACTIVE) {

@@ -134,6 +134,11 @@ FlutterWindowsView::~FlutterWindowsView() {
   }
 }
 
+void FlutterWindowsView::ResetSizingDelegate() {
+  std::unique_lock<std::mutex> lock(resize_mutex_);
+  sizing_delegate_ = nullptr;
+}
+
 bool FlutterWindowsView::OnEmptyFrameGenerated() {
   // Called on the raster thread.
   std::unique_lock<std::mutex> lock(resize_mutex_);
@@ -164,8 +169,9 @@ bool FlutterWindowsView::OnFrameGenerated(size_t width, size_t height) {
     if (!ResizeRenderSurface(width, height)) {
       return false;
     }
-
-    sizing_delegate_->DidUpdateViewSize(width, height);
+    if (sizing_delegate_) {
+      sizing_delegate_->DidUpdateViewSize(width, height);
+    }
     return true;
   }
 
