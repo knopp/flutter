@@ -11,6 +11,7 @@ import 'models.dart';
 import 'rotated_wire_cube.dart';
 import 'dart:math';
 import 'package:flutter/src/widgets/_window.dart';
+import 'package:flutter/src/widgets/_window_positioner.dart';
 import 'tooltip_button.dart';
 
 class RegularWindowContent extends StatelessWidget {
@@ -78,13 +79,16 @@ class RegularWindowContent extends StatelessWidget {
                     windowManager.add(
                       KeyedWindow(
                         key: key,
-                        controller: DialogWindowController(
+                        controller: SatelliteWindowController(
                           preferredSize: windowSettings.dialogSize,
-                          delegate: CallbackDialogWindowControllerDelegate(
+                          delegate: CallbackSatelliteWindowControllerDelegate(
                             onDestroyed: () => windowManager.remove(key),
                           ),
                           parent: window,
-                          title: 'Dialog',
+                          title: 'Satellite',
+                          anchorRect: Rect.fromLTWH(0, 0, 0, 0),
+                          positioner: const WindowPositioner(),
+
                         ),
                       ),
                     );

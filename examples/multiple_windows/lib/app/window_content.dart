@@ -49,7 +49,10 @@ class WindowContent extends StatelessWidget {
         ),
       ),
       PopupWindowController() => throw UnimplementedError(),
-      SatelliteWindowController() => throw UnimplementedError(),
+      final SatelliteWindowController satellite => SatelliteWindow(
+        controller: satellite,
+        child: MaterialApp(home: Container()),
+      ),
     };
   }
 }

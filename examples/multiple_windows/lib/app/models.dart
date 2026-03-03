@@ -24,6 +24,8 @@ class KeyedWindow {
         return dialogController.parent;
       case TooltipWindowController tooltipController:
         return tooltipController.parent;
+      case SatelliteWindowController satelliteWindowController:
+        return satelliteWindowController.parent;
       default:
         throw Exception('Unknown controller type');
     }
@@ -126,6 +128,19 @@ class WindowSettingsAccessor extends InheritedWidget {
 class CallbackDialogWindowControllerDelegate
     with DialogWindowControllerDelegate {
   CallbackDialogWindowControllerDelegate({required this.onDestroyed});
+
+  @override
+  void onWindowDestroyed() {
+    onDestroyed();
+    super.onWindowDestroyed();
+  }
+
+  final VoidCallback onDestroyed;
+}
+
+class CallbackSatelliteWindowControllerDelegate
+    with SatelliteWindowControllerDelegate {
+  CallbackSatelliteWindowControllerDelegate({required this.onDestroyed});
 
   @override
   void onWindowDestroyed() {
