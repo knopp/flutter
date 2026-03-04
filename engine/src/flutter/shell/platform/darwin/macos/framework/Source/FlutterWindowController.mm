@@ -200,6 +200,10 @@ static void FlipRect(NSRect& rect, const NSRect& globalScreenFrame) {
     return;
   }
 
+  // For bordered windows the positioner needs size including the frame.
+  newSize =
+      [self.window frameRectForContentRect:NSMakeRect(0, 0, newSize.width, newSize.height)].size;
+
   NSRect globalScreenFrame = ComputeGlobalScreenFrame();
 
   NSRect parentRect =
@@ -213,6 +217,11 @@ static void FlipRect(NSRect& rect, const NSRect& globalScreenFrame) {
   auto position = _creationRequest.on_get_window_position(
       FlutterWindowSize::fromNSSize(newSize), FlutterWindowRect::fromNSRect(parentRect),
       FlutterWindowRect::fromNSRect(screenRect));
+
+  if (position == nullptr) {
+    NSLog(@"Received NULL position from the positioner.");
+    return;
+  }
 
   NSRect positionRect = position->toNSRect();
   FlipRect(positionRect, globalScreenFrame);
@@ -439,10 +448,6 @@ static void FlipRect(NSRect& rect, const NSRect& globalScreenFrame) {
   [parent addChildWindow:window ordered:NSWindowAbove];
   [_windows addObject:owner];
 
-  if (request->has_size) {
-    [owner viewDidUpdateContents:controller.flutterView withSize:request->size.toNSSize()];
-  }
-
   return controller.viewIdentifier;
 }
 
@@ -665,6 +670,23 @@ void InternalFlutter_Window_Reparent(int64_t engineId, void* window, int64_t new
   FlutterEngine* engine = [FlutterEngine engineForIdentifier:engineId];
   NSWindow* w = (__bridge NSWindow*)window;
   [engine.windowController reparentWindow:w newParentId:newParentId];
+}
+
+void* InternalFlutter_Window_GetParent(void* window) {
+  NSWindow* w = (__bridge NSWindow*)window;
+  return (__bridge void*)w.parentWindow;
+}
+
+FlutterWindowRect InternalFlutter_Window_FrameRectAsAnchorRect(void* window) {
+  NSWindow* w = (__bridge NSWindow*)window;
+  NSRect globalScreenFrame = ComputeGlobalScreenFrame();
+  NSRect frameRect = w.frame;
+  FlipRect(frameRect, globalScreenFrame);
+  NSRect contentRect = [w convertRectToScreen:w.contentView.bounds];
+  FlipRect(contentRect, globalScreenFrame);
+  return FlutterWindowRect::fromNSRect(NSMakeRect(frameRect.origin.x - contentRect.origin.x,
+                                                  frameRect.origin.y - contentRect.origin.y,
+                                                  frameRect.size.width, frameRect.size.height));
 }
 
 // NOLINTEND(google-objc-function-naming)

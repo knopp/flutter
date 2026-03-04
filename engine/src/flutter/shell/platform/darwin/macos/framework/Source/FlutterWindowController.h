@@ -154,6 +154,12 @@ void InternalFlutter_Window_UpdatePosition(void* window);
 FLUTTER_DARWIN_EXPORT
 void InternalFlutter_Window_Reparent(int64_t engineId, void* window, int64_t newParentId);
 
+FLUTTER_DARWIN_EXPORT
+void* InternalFlutter_Window_GetParent(void* window);
+
+FLUTTER_DARWIN_EXPORT
+FlutterWindowRect InternalFlutter_Window_FrameRectAsAnchorRect(void* window);
+
 // NOLINTEND(google-objc-function-naming)
 }
 

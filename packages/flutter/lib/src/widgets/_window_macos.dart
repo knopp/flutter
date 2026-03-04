@@ -171,8 +171,8 @@ class WindowingOwnerMacOS extends WindowingOwner {
     return SatelliteWindowControllerMacOS(
       owner: this,
       parent: parent,
-      anchorRect: anchorRect,
-      positioner: positioner,
+      initialAnchorRect: initialAnchorRect,
+      initialPositioner: initialPositioner,
       delegate: delegate,
       preferredSize: preferredSize,
       preferredConstraints: preferredConstraints,
@@ -503,20 +503,24 @@ class RegularWindowControllerMacOS extends RegularWindowController with _WindowC
   String get title => _MacOSPlatformInterface.getTitle(getWindowHandle());
 }
 
+/// MacOS specific implementation of [SatelliteWindowController].
+///
+/// {@macro flutter.widgets.windowing.experimental}
 class SatelliteWindowControllerMacOS extends SatelliteWindowController with _WindowControllerMixin {
+  /// Creates a new satellite window controller for macOS.
   SatelliteWindowControllerMacOS({
     required WindowingOwnerMacOS owner,
     required BaseWindowController parent,
-    required Rect anchorRect,
-    required WindowPositioner positioner,
+    required Rect? initialAnchorRect,
+    required WindowPositioner initialPositioner,
     required SatelliteWindowControllerDelegate delegate,
     Size? preferredSize,
     BoxConstraints? preferredConstraints,
     String? title,
   }) : _delegate = delegate,
        _parent = parent,
-       _anchorRect = anchorRect,
-       _positioner = positioner,
+       _initialAnchorRect = initialAnchorRect,
+       _initialPositioner = initialPositioner,
        super.empty() {
     _initController(owner);
 
@@ -536,6 +540,7 @@ class SatelliteWindowControllerMacOS extends SatelliteWindowController with _Win
     if (title != null) {
       setTitle(title);
     }
+    _MacOSPlatformInterface.updateWindowPosition(getWindowHandle());
   }
 
   @override
@@ -602,11 +607,22 @@ class SatelliteWindowControllerMacOS extends SatelliteWindowController with _Win
     Pointer<_Rect> outputRect,
   ) {
     super._handleOnGetWindowPosition(childSize, parentRect, outputRect);
+    Rect parent = parentRect.ref.toRect();
+    Rect? anchor = _initialAnchorRect;
+    if (anchor == null) {
+      final Pointer<Void> parentHandle = _MacOSPlatformInterface.getParent(getWindowHandle());
+      final Rect anchorExpanded = _MacOSPlatformInterface.frameRectAsAnchorRect(
+        parentHandle,
+      ).toRect().translate(parent.left, parent.top);
+      parent = parent.expandToInclude(anchorExpanded);
+      anchor = Rect.fromLTWH(0, 0, parent.width, parent.height);
+    }
+
     final Pointer<_Rect> result = _allocator<_Rect>();
-    final Rect targetRect = _positioner.placeWindow(
+    final Rect targetRect = _initialPositioner.placeWindow(
       childSize: childSize.ref.toSize(),
-      anchorRect: _anchorRect.translate(parentRect.ref.left, parentRect.ref.top),
-      parentRect: parentRect.ref.toRect(),
+      anchorRect: anchor.translate(parent.left, parent.top),
+      parentRect: parent,
       displayRect: outputRect.ref.toRect(),
     );
     result.ref.left = targetRect.left;
@@ -621,8 +637,8 @@ class SatelliteWindowControllerMacOS extends SatelliteWindowController with _Win
 
   final BaseWindowController _parent;
   final SatelliteWindowControllerDelegate _delegate;
-  WindowPositioner _positioner;
-  Rect _anchorRect;
+  WindowPositioner _initialPositioner;
+  Rect? _initialAnchorRect;
 }
 
 /// Implementation of [DialogWindowController] for the macOS platform.
@@ -1108,6 +1124,12 @@ class _MacOSPlatformInterface {
 
   @Native<Void Function(Int64, Pointer<Void>, Int64)>(symbol: 'InternalFlutter_Window_Reparent')
   external static void reparent(int engineId, Pointer<Void> windowHandle, int newParentViewId);
+
+  @Native<Pointer<Void> Function(Pointer<Void>)>(symbol: 'InternalFlutter_Window_GetParent')
+  external static Pointer<Void> getParent(Pointer<Void> windowHandle);
+
+  @Native<_Rect Function(Pointer<Void>)>(symbol: 'InternalFlutter_Window_FrameRectAsAnchorRect')
+  external static _Rect frameRectAsAnchorRect(Pointer<Void> windowHandle);
 }
 
 // FFI utilities.

@@ -86,9 +86,8 @@ class RegularWindowContent extends StatelessWidget {
                           ),
                           parent: window,
                           title: 'Satellite',
-                          anchorRect: Rect.fromLTWH(0, 0, 0, 0),
-                          positioner: const WindowPositioner(),
-
+                          initialAnchorRect: Rect.fromLTWH(0, 0, 0, 0),
+                          initialPositioner: const WindowPositioner(),
                         ),
                       ),
                     );
