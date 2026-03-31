@@ -159,6 +159,9 @@ class _StubPopupWindowController extends PopupWindowController {
 
   @override
   void updatePosition({Rect? anchorRect, WindowPositioner? positioner}) {}
+
+  @override
+  Offset get offsetFromParent => Offset.zero;
 }
 
 class _StubSatelliteWindowController extends SatelliteWindowController {
@@ -1025,7 +1028,7 @@ void main() {
           ),
         );
 
-        expect(isActivated, equals(false));
+        expect(isActivated, equals(true));
       });
 
       testWidgets('Can access WindowScope.isActivatedOf for satellite windows', (
@@ -1135,7 +1138,7 @@ void main() {
           ),
         );
 
-        expect(isActivated, equals(false));
+        expect(isActivated, isTrue);
       });
 
       testWidgets('Can access WindowScope.maybeIsActivatedOf for satellite windows', (

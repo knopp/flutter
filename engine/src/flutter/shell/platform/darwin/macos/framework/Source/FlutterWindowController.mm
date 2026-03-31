@@ -362,12 +362,11 @@ static void FlipRect(NSRect& rect, const NSRect& globalScreenFrame) {
 
   NSWindow* parent = nil;
 
-  if (request->parent_view_id != 0) {
-    for (FlutterWindowOwner* owner in _windows) {
-      if (owner.flutterViewController.viewIdentifier == request->parent_view_id) {
-        parent = owner.window;
-        break;
-      }
+  FML_DCHECK(request->parent_view_id != 0);
+  for (FlutterWindowOwner* owner in _windows) {
+    if (owner.flutterViewController.viewIdentifier == request->parent_view_id) {
+      parent = owner.window;
+      break;
     }
   }
 
@@ -414,12 +413,11 @@ static void FlipRect(NSRect& rect, const NSRect& globalScreenFrame) {
 
   NSWindow* parent = nil;
 
-  if (request->parent_view_id != 0) {
-    for (FlutterWindowOwner* owner in _windows) {
-      if (owner.flutterViewController.viewIdentifier == request->parent_view_id) {
-        parent = owner.window;
-        break;
-      }
+  FML_DCHECK(request->parent_view_id != 0);
+  for (FlutterWindowOwner* owner in _windows) {
+    if (owner.flutterViewController.viewIdentifier == request->parent_view_id) {
+      parent = owner.window;
+      break;
     }
   }
 
@@ -427,7 +425,7 @@ static void FlipRect(NSRect& rect, const NSRect& globalScreenFrame) {
 
   window.collectionBehavior = NSWindowCollectionBehaviorAuxiliary;
   [parent addChildWindow:window ordered:NSWindowAbove];
-  // window.alphaValue = 0.0;
+  window.alphaValue = 0.0;
   return controller.viewIdentifier;
 }
 
@@ -656,6 +654,26 @@ void InternalFlutter_Window_UpdatePosition(void* window) {
   NSWindow* w = (__bridge NSWindow*)window;
   FlutterWindowOwner* owner = (FlutterWindowOwner*)w.delegate;
   [owner updatePosition];
+}
+
+FlutterWindowOffset InternalFlutter_Window_GetOffsetInParent(void* window) {
+  NSWindow* w = (__bridge NSWindow*)window;
+  NSWindow* parent = w.parentWindow;
+  if (!parent) {
+    return {0, 0};
+  }
+  NSRect globalScreenFrame = ComputeGlobalScreenFrame();
+
+  NSRect parentRect = [parent contentRectForFrameRect:parent.frame];
+  FlipRect(parentRect, globalScreenFrame);
+
+  NSRect childRect = w.frame;
+  FlipRect(childRect, globalScreenFrame);
+
+  return {
+      .x = childRect.origin.x - parentRect.origin.x,
+      .y = childRect.origin.y - parentRect.origin.y,
+  };
 }
 
 // NOLINTEND(google-objc-function-naming)
