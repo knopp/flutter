@@ -76,6 +76,13 @@ struct TooltipWindowCreationRequest {
   GetWindowPositionCallback get_position_callback;
 };
 
+struct PopupWindowCreationRequest {
+  WindowConstraints preferred_constraints;
+  bool is_sized_to_content;
+  HWND parent;
+  GetWindowPositionCallback get_position_callback;
+};
+
 struct WindowsMessage {
   FlutterViewId view_id;
   HWND hwnd;
@@ -119,6 +126,8 @@ class WindowManager {
 
   FlutterViewId CreateTooltipWindow(
       const TooltipWindowCreationRequest* request);
+
+  FlutterViewId CreatePopupWindow(const PopupWindowCreationRequest* request);
 
   // Message handler called by |HostWindow::WndProc| to process window
   // messages before delegating them to the host window. This allows the
@@ -172,6 +181,11 @@ FlutterViewId InternalFlutterWindows_WindowManager_CreateTooltipWindow(
     int64_t engine_id,
     const flutter::TooltipWindowCreationRequest* request);
 
+FLUTTER_EXPORT
+FlutterViewId InternalFlutterWindows_WindowManager_CreatePopupWindow(
+    int64_t engine_id,
+    const flutter::PopupWindowCreationRequest* request);
+
 // Retrives the HWND associated with this |engine_id| and |view_id|. Returns
 // NULL if the HWND cannot be found
 FLUTTER_EXPORT
@@ -207,6 +221,9 @@ bool InternalFlutterWindows_WindowManager_GetFullscreen(HWND hwnd);
 
 FLUTTER_EXPORT
 void InternalFlutterWindows_WindowManager_UpdateTooltipPosition(HWND hwnd);
+
+FLUTTER_EXPORT
+void InternalFlutterWindows_WindowManager_UpdatePopupPosition(HWND hwnd);
 }
 
 #endif  // FLUTTER_SHELL_PLATFORM_WINDOWS_WINDOW_MANAGER_H_
