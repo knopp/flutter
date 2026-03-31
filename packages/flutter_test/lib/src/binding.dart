@@ -291,6 +291,13 @@ mixin _ChildWindowHierarchyMixin {
           }
           activateable = (popupChild as _TestPopupWindowController).getFirstActivatableChild();
           foundPopup = true;
+        case final SatelliteWindowController satelliteChild:
+          if (foundPopup) {
+            // Already found a popup, skip anything else.
+            break;
+          }
+          activateable = (satelliteChild as _TestSatelliteWindowController)
+              .getFirstActivatableChild();
       }
     }
 
@@ -427,6 +434,8 @@ void _addChildToParent(BaseWindowController? parent, BaseWindowController child)
         (testParent as _TestRegularWindowController).addChild(child);
       case final PopupWindowController testParent:
         (testParent as _TestPopupWindowController).addChild(child);
+      case final SatelliteWindowController testParent:
+        (testParent as _TestSatelliteWindowController).addChild(child);
       case TooltipWindowController _:
         fail('TooltipWindowController cannot be a parent of another window controller.');
     }
@@ -442,6 +451,8 @@ void _removeChildFromParent(BaseWindowController? parent, BaseWindowController c
         (testParent as _TestRegularWindowController).removeChild(child);
       case final PopupWindowController testParent:
         (testParent as _TestPopupWindowController).removeChild(child);
+      case final SatelliteWindowController testParent:
+        (testParent as _TestSatelliteWindowController).removeChild(child);
       case TooltipWindowController _:
         fail('TooltipWindowController cannot be a parent of another window controller.');
     }
@@ -628,13 +639,11 @@ class _TestPopupWindowController extends PopupWindowController with _ChildWindow
     required TestPlatformDispatcher platformDispatcher,
     required this.windowingOwner,
     required BoxConstraints preferredConstraints,
-    required bool isSizedToContent,
     required ui.Rect anchorRect,
     required WindowPositioner positioner,
     required BaseWindowController parent,
   }) : _delegate = delegate,
        _constraints = preferredConstraints,
-       _isSizedToContent = isSizedToContent,
        _anchorRect = anchorRect,
        _positioner = positioner,
        _parent = parent,
@@ -643,33 +652,36 @@ class _TestPopupWindowController extends PopupWindowController with _ChildWindow
       controller: this,
       platformDispatcher: platformDispatcher,
       constraints: _constraints,
-      onRender: (size) {
-        if (_isSizedToContent && _lastRenderedSize != size) {
-          _lastRenderedSize = size;
-          scheduleMicrotask(() {
-            notifyListeners();
-          });
-        }
-      },
     );
     _addChildToParent(parent, this);
+
+    // Automatically activate the window when created.
+    activate();
   }
 
   final PopupWindowControllerDelegate _delegate;
   final _TestWindowingOwner windowingOwner;
   BoxConstraints _constraints;
-  ui.Rect _anchorRect;
-  WindowPositioner _positioner;
+  // ignore: unused_field
+  final ui.Rect _anchorRect;
+  // ignore: unused_field
+  final WindowPositioner _positioner;
   final BaseWindowController _parent;
-  final bool _isSizedToContent;
-  Size? _lastRenderedSize;
 
   @override
-  Size get contentSize =>
-      _isSizedToContent && _lastRenderedSize != null ? _lastRenderedSize! : _constraints.biggest;
+  Size get contentSize => _constraints.biggest;
 
   @override
   BaseWindowController get parent => _parent;
+
+  @override
+  bool get isActivated => windowingOwner.isWindowControllerActive(this);
+
+  @override
+  void activate() {
+    final BaseWindowController activated = windowingOwner.activateWindowController(this);
+    activated.notifyListeners();
+  }
 
   @override
   void setConstraints(BoxConstraints constraints) {
@@ -678,9 +690,109 @@ class _TestPopupWindowController extends PopupWindowController with _ChildWindow
   }
 
   @override
-  void updatePosition({Rect? anchorRect, WindowPositioner? positioner}) {
-    _anchorRect = anchorRect ?? _anchorRect;
-    _positioner = positioner ?? _positioner;
+  void destroy() {
+    _delegate.onWindowDestroyed();
+    removeAllChildren();
+    windowingOwner.deactivateWindowController(this);
+    _removeChildFromParent(parent, this);
+  }
+}
+
+class _TestSatelliteWindowController extends SatelliteWindowController
+    with _ChildWindowHierarchyMixin {
+  _TestSatelliteWindowController({
+    required SatelliteWindowControllerDelegate delegate,
+    required TestPlatformDispatcher platformDispatcher,
+    required this.windowingOwner,
+    required BaseWindowController parent,
+    ui.Rect? anchorRect,
+    required WindowPositioner positioner,
+    Size? preferredSize,
+    BoxConstraints? preferredConstraints,
+    String? title,
+  }) : _delegate = delegate,
+       _parent = parent,
+       // ignore: unused_field
+       _anchorRect = anchorRect,
+       // ignore: unused_field
+       _positioner = positioner,
+       _size = preferredSize ?? const Size(800, 600),
+       _constraints = preferredConstraints ?? BoxConstraints.loose(const Size(1920, 1080)),
+       _title = title ?? 'Test Window',
+       super.empty() {
+    _constrainToBounds();
+    rootView = _TestFlutterView(
+      controller: this,
+      platformDispatcher: platformDispatcher,
+      constraints: _constraints,
+    );
+    _addChildToParent(parent, this);
+
+    // Automatically activate the window when created.
+    activate();
+  }
+
+  final SatelliteWindowControllerDelegate _delegate;
+  BaseWindowController _parent;
+  final _TestWindowingOwner windowingOwner;
+  // ignore: unused_field
+  final ui.Rect? _anchorRect;
+  // ignore: unused_field
+  final WindowPositioner _positioner;
+  Size _size;
+  BoxConstraints _constraints;
+  String _title;
+
+  @override
+  Size get contentSize => _size;
+
+  @override
+  BaseWindowController get parent => _parent;
+
+  @override
+  String get title => _title;
+
+  @override
+  bool get isActivated => windowingOwner.isWindowControllerActive(this);
+
+  @override
+  void setParent(BaseWindowController parent) {
+    _removeChildFromParent(_parent, this);
+    _parent = parent;
+    _addChildToParent(parent, this);
+    notifyListeners();
+  }
+
+  @override
+  void setSize(Size size) {
+    _size = size;
+    _constrainToBounds();
+    notifyListeners();
+  }
+
+  @override
+  void setConstraints(BoxConstraints constraints) {
+    _constraints = constraints;
+    _constrainToBounds();
+    notifyListeners();
+  }
+
+  @override
+  void setTitle(String title) {
+    _title = title;
+    notifyListeners();
+  }
+
+  @override
+  void activate() {
+    final BaseWindowController activated = windowingOwner.activateWindowController(this);
+    activated.notifyListeners();
+  }
+
+  void _constrainToBounds() {
+    final double width = _constraints.constrainWidth(_size.width);
+    final double height = _constraints.constrainHeight(_size.height);
+    _size = Size(width, height);
   }
 
   @override
@@ -688,7 +800,7 @@ class _TestPopupWindowController extends PopupWindowController with _ChildWindow
     _delegate.onWindowDestroyed();
     removeAllChildren();
     windowingOwner.deactivateWindowController(this);
-    _removeChildFromParent(parent, this);
+    _removeChildFromParent(_parent, this);
   }
 }
 
@@ -736,6 +848,11 @@ class _TestWindowingOwner extends WindowingOwner {
             .getFirstActivatableChild();
         _activeWindowController = leaf;
         return _activeWindowController!;
+      case final SatelliteWindowController _:
+        final BaseWindowController leaf = (controller as _TestSatelliteWindowController)
+            .getFirstActivatableChild();
+        _activeWindowController = leaf;
+        return _activeWindowController!;
     }
   }
 
@@ -751,7 +868,10 @@ class _TestWindowingOwner extends WindowingOwner {
         dialogParent.activate();
       case final TooltipWindowController _:
         fail('TooltipWindowController cannot be a parent of DialogWindowController.');
-      case final PopupWindowController _:
+      case final PopupWindowController popupParent:
+        popupParent.activate();
+      case final SatelliteWindowController satelliteParent:
+        satelliteParent.activate();
     }
 
     return true;
@@ -787,6 +907,10 @@ class _TestWindowingOwner extends WindowingOwner {
         if (!_tryActivateParent(popupController.parent)) {
           _activeWindowController = null;
         }
+      case final SatelliteWindowController satelliteController:
+        if (!_tryActivateParent(satelliteController.parent)) {
+          _activeWindowController = null;
+        }
     }
   }
 
@@ -802,6 +926,7 @@ class _TestWindowingOwner extends WindowingOwner {
     Size? preferredSize,
     BoxConstraints? preferredConstraints,
     String? title,
+    bool decorated = true,
   }) {
     return _TestRegularWindowController(
       delegate: delegate,
@@ -821,6 +946,7 @@ class _TestWindowingOwner extends WindowingOwner {
     BoxConstraints? preferredConstraints,
     BaseWindowController? parent,
     String? title,
+    bool decorated = true,
   }) {
     return _TestDialogWindowController(
       delegate: delegate,
@@ -858,7 +984,6 @@ class _TestWindowingOwner extends WindowingOwner {
   PopupWindowController createPopupWindowController({
     required PopupWindowControllerDelegate delegate,
     required BoxConstraints preferredConstraints,
-    required bool isSizedToContent,
     required ui.Rect anchorRect,
     required WindowPositioner positioner,
     required BaseWindowController parent,
@@ -866,12 +991,35 @@ class _TestWindowingOwner extends WindowingOwner {
     return _TestPopupWindowController(
       delegate: delegate,
       platformDispatcher: _platformDispatcher,
-      isSizedToContent: isSizedToContent,
       windowingOwner: this,
       preferredConstraints: preferredConstraints,
       anchorRect: anchorRect,
       positioner: positioner,
       parent: parent,
+    );
+  }
+
+  @internal
+  @override
+  SatelliteWindowController createSatelliteWindowController({
+    required SatelliteWindowControllerDelegate delegate,
+    required BaseWindowController parent,
+    required WindowPositioner initialPositioner,
+    Rect? initialAnchorRect,
+    Size? preferredSize,
+    BoxConstraints? preferredConstraints,
+    String? title,
+  }) {
+    return _TestSatelliteWindowController(
+      delegate: delegate,
+      platformDispatcher: _platformDispatcher,
+      windowingOwner: this,
+      parent: parent,
+      anchorRect: initialAnchorRect,
+      positioner: initialPositioner,
+      preferredSize: preferredSize,
+      preferredConstraints: preferredConstraints,
+      title: title,
     );
   }
 }
