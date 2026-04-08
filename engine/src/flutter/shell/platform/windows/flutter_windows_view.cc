@@ -165,6 +165,7 @@ bool FlutterWindowsView::OnEmptyFrameGenerated() {
 bool FlutterWindowsView::OnFrameGenerated(size_t width, size_t height) {
   // Called on the raster thread.
   std::unique_lock<std::mutex> lock(resize_mutex_);
+  first_frame_generated_ = true;
 
   if (IsSizedToContent()) {
     if (!ResizeRenderSurface(width, height)) {
@@ -238,6 +239,13 @@ bool FlutterWindowsView::OnWindowSizeChanged(size_t width, size_t height) {
   }
 
   SendWindowMetrics(width, height, binding_handler_->GetDpiScale());
+
+  {
+    std::unique_lock<std::mutex> lock(resize_mutex_);
+    if (!first_frame_generated_) {
+      // return true;
+    }
+  }
 
   std::chrono::time_point<std::chrono::steady_clock> start_time =
       std::chrono::steady_clock::now();

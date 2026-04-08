@@ -1073,6 +1073,47 @@ TEST(FlutterWindowsViewTest, WindowResizeRace) {
   view->OnFramePresented();
 }
 
+TEST(FlutterWindowsViewTest, FirstFrameResizeDoesNotBlock) {
+  std::unique_ptr<FlutterWindowsEngine> engine = GetTestEngine();
+
+  EngineModifier engine_modifier(engine.get());
+  engine_modifier.embedder_api().PostRenderThreadTask = MOCK_ENGINE_PROC(
+      PostRenderThreadTask,
+      ([](auto engine, VoidCallback callback, void* user_data) {
+        callback(user_data);
+        return kSuccess;
+      }));
+
+  auto egl_manager = std::make_unique<egl::MockManager>();
+  auto surface = std::make_unique<egl::MockWindowSurface>(500, 500);
+
+  EXPECT_CALL(*surface.get(), IsValid).WillRepeatedly(Return(true));
+  EXPECT_CALL(*surface.get(), Destroy).WillOnce(Return(true));
+
+  std::unique_ptr<FlutterWindowsView> view =
+      engine->CreateView(std::make_unique<NiceMock<MockWindowBindingHandler>>(),
+                         /*is_sized_to_content=*/false, BoxConstraints());
+
+  ViewModifier view_modifier{view.get()};
+  engine_modifier.SetEGLManager(std::move(egl_manager));
+  view_modifier.SetSurface(std::move(surface));
+
+  bool did_pump_event_loop = false;
+
+  engine->task_runner()->PostTask([&] { did_pump_event_loop = true; });
+
+  // No frame generated yet, this shold not block
+  EXPECT_TRUE(view->OnWindowSizeChanged(500, 500));
+  EXPECT_FALSE(did_pump_event_loop);
+
+  view->OnFrameGenerated(500, 500);
+  view->OnFramePresented();
+
+  // This should timeout and pump the event loop now that frame was generated.
+  EXPECT_FALSE(view->OnWindowSizeChanged(600, 600));
+  EXPECT_TRUE(did_pump_event_loop);
+}
+
 // Window resize should succeed even if the render surface could not be created
 // even though EGL initialized successfully.
 TEST(FlutterWindowsViewTest, WindowResizeInvalidSurface) {

@@ -16,8 +16,12 @@ namespace egl {
 /// Mock for the |WindowSurface| base class.
 class MockWindowSurface : public flutter::egl::WindowSurface {
  public:
-  MockWindowSurface()
-      : WindowSurface(EGL_NO_DISPLAY, EGL_NO_CONTEXT, EGL_NO_SURFACE, 0, 0) {}
+  explicit MockWindowSurface(int width = 0, int height = 0)
+      : WindowSurface(EGL_NO_DISPLAY,
+                      EGL_NO_CONTEXT,
+                      EGL_NO_SURFACE,
+                      width,
+                      height) {}
 
   MOCK_METHOD(bool, IsValid, (), (const, override));
   MOCK_METHOD(bool, Destroy, (), (override));

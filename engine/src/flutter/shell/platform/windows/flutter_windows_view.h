@@ -497,6 +497,9 @@ class FlutterWindowsView : public WindowBindingHandlerDelegate {
   // True when flutter's semantics tree is enabled.
   bool semantics_enabled_ = false;
 
+  // True if first frame has been generated already.
+  bool first_frame_generated_ = false;
+
   // The accessibility bridge associated with this view.
   std::shared_ptr<AccessibilityBridgeWindows> accessibility_bridge_;
 
