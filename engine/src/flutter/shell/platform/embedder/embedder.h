@@ -856,7 +856,7 @@ typedef struct {
 
   /// Value for which the render thread will wait on the event.
   /// After rendering the event value will be incremented by one.
-  int64_t event_value;
+  uint64_t event_value;
 
 } FlutterMetalExternalTexture;
 
