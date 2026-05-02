@@ -151,7 +151,7 @@ source_set("display_list") {
 
   if (shell_enable_metal) {
     sources += [ "fence/dl_fence_mtl.mm" ]
-    cflags = [ "-fobjc-arc" ]
+    cflags_objcc = [ "-fobjc-arc" ]
   }
 
   public_configs = [ ":display_list_config" ]
