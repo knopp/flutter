@@ -1200,6 +1200,8 @@ mixin SchedulerBinding on BindingBase {
 
   final TimelineTask? _frameTimelineTask = kReleaseMode ? null : TimelineTask();
 
+  static Duration? _previousFrameTimeStamp;
+
   /// Called by the engine to prepare the framework to produce a new frame.
   ///
   /// This function calls all the transient frame callbacks registered by
@@ -1224,6 +1226,12 @@ mixin SchedulerBinding on BindingBase {
   /// statements printed during a frame from those printed between frames (e.g.
   /// in response to events or timers).
   void handleBeginFrame(Duration? rawTimeStamp) {
+    rawTimeStamp ??= Duration.zero;
+    final Duration delta = rawTimeStamp - (_previousFrameTimeStamp ?? rawTimeStamp);
+    _previousFrameTimeStamp = rawTimeStamp;
+
+    print('Handle begin frame $rawTimeStamp delta $delta');
+
     _frameTimelineTask?.start('Frame');
     _firstRawTimeStampInEpoch ??= rawTimeStamp;
     _currentFrameTimeStamp = _adjustForEpoch(rawTimeStamp ?? _lastRawTimeStamp);
