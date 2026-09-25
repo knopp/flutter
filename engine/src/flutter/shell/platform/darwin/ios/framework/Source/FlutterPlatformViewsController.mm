@@ -746,6 +746,8 @@ static CGRect GetCGRectFromDlRect(const DlRect& clipDlRect) {
      withIosContext:(const std::shared_ptr<flutter::IOSContext>&)iosContext {
   TRACE_EVENT0("flutter", "PlatformViewsController::SubmitFrame");
 
+// Trigger the platform view presentation path.
+#if 0
   // No platform views to render.
   if (self.flutterView == nil || (self.compositionOrder.empty() && !self.hadPlatformViews)) {
     // No platform views to render but the FlutterView may need to be resized.
@@ -766,6 +768,7 @@ static CGRect GetCGRectFromDlRect(const DlRect& clipDlRect) {
     self.hadPlatformViews = NO;
     return background_frame->Submit();
   }
+#endif
   self.hadPlatformViews = !self.compositionOrder.empty();
 
   bool didEncode = true;
@@ -862,6 +865,11 @@ static CGRect GetCGRectFromDlRect(const DlRect& clipDlRect) {
                     unusedLayers:unusedLayers
                    surfaceFrames:surfaceFrames];
   });
+
+  // Assuming 60fps pretend that we have work on raster thread.
+  CFTimeInterval now = CACurrentMediaTime();
+  while (CACurrentMediaTime() < now + 0.008) {
+  }
 
   [self.taskRunner runNowOrPostTask:^{
     task();
